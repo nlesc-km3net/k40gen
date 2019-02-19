@@ -33,7 +33,7 @@ namespace storage {
 #ifdef HAVE_CUDA
 using storage_t = thrust::host_vector<long, thrust::cuda::experimental::pinned_allocator<int>>;
 #else
-using storage_t = std::vector<long>;
+using storage_t = std::vector<long, aligned_allocator<long>>;
 #endif
 
 using queue_t = std::vector<std::tuple<storage_t, storage_t>>;

@@ -39,9 +39,6 @@ namespace Constants {
   const float tot_sigma = 2.44078f;
 
   const int random_method = 2;
-  const std::array<float, 4> rates{7000., 700, 70., 7.};
-
-  const float tau_l0 = 1.0e9f / rates[0];
 }
 
 float cross_prob(const float ct);
@@ -56,7 +53,7 @@ public:
   Generators(const int seed0, const int seed1, const std::array<float, 4> rates);
 
   std::mt19937_64 mt;
-  double coincidence_rate;
+  const double coincidence_rate = 0.;
   std::geometric_distribution<long> coincidence;
   std::uniform_real_distribution<double> flat;
   std::array<float, 31> prob1D;
@@ -69,6 +66,20 @@ public:
 
   const std::array<int, 2>& seeds() const {
     return m_seeds;
+  }
+
+  float tau_l0() const {
+     return 1.0e9f / m_rates[0];
+  }
+
+  size_t n_expect(const long interval) const {
+    float total_rate = std::accumulate(begin(m_rates), end(m_rates), 0.f);
+    // Fudge with 30% extra space to avoid reallocating
+    double n_per_pmt = 1.3 * total_rate * (double)(interval) / 1e9;
+    if (n_per_pmt > std::numeric_limits<float>::max()) {
+      throw std::domain_error{"rate of " + std::to_string(n_per_pmt) + " is too large"};
+    }
+    return std::lround(storage::n_dom * storage::n_mod * (float)n_per_pmt);
   }
 
 };
@@ -99,7 +110,8 @@ unsigned int random_index(const Container& buffer, const double random) {
   }
 }
 
-size_t fill_coincidences(storage_t& times, size_t idx, const long time_start, const long time_end,
+size_t fill_coincidences(storage_t& times, size_t& idx,
+                         const long time_start, const long time_end,
                          Generators& gens);
 
 std::tuple<storage_t, storage_t> generate(const long start, const long end,

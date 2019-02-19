@@ -5,11 +5,17 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # for find_package
 
 option(ENABLE_PYTHON "Enable python bindings" TRUE)
 option(ENABLE_VC "Enable usage of VC library" TRUE)
+option(ENABLE_TESTS "Enable tests" TRUE)
+
+include(ExternalProject)
+include(FindPackageHandleStandardArgs)
 
 if (ENABLE_VC)
 find_package(Vc)
 
-if (NOT Vc_FOUND or Vc_VERSION VERSION_LESS "1.3.2")
+if (NOT Vc_FOUND OR "${Vc_VERSION}" VERSION_LESS "1.3.2")
+
+message(STATUS "Using builtin Vc")
 
 set(EXTERNAL_DIR "external")
 set(Vc_VERSION "1.4.1")
@@ -19,8 +25,6 @@ set(Vc_DESTDIR "${CMAKE_BINARY_DIR}/${EXTERNAL_DIR}")
 set(Vc_LIBNAME "${CMAKE_STATIC_LIBRARY_PREFIX}Vc${CMAKE_STATIC_LIBRARY_SUFFIX}")
 set(Vc_LIBRARY "${Vc_DESTDIR}/lib/${Vc_LIBNAME}")
 
-include(ExternalProject)
-include(FindPackageHandleStandardArgs)
 
 ExternalProject_Add(VC
   URL ${Vc_SRC_URI}
@@ -73,8 +77,7 @@ ExternalProject_Add(vectorclass
   SOURCE_DIR vectorclass
   INSTALL_DIR ${vectorclass_ROOTDIR}
   CONFIGURE_COMMAND ""
-  UPDATE_COMMAND unzip -o special.zip
-  BUILD_COMMAND ""
+  BUILD_COMMAND unzip -d <SOURCE_DIR> -o <SOURCE_DIR>/special.zip
   INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>
   STEP_TARGETS install
 )
@@ -97,7 +100,9 @@ if(ENABLE_PYTHON)
 # pybind11
 find_package(pybind11)
 
-if (NOT pybind11_FOUND or pybind11_VERSION VERSION_LESS "2.1.0")
+if (NOT pybind11_FOUND OR pybind11_VERSION VERSION_LESS "2.1.0")
+message(STATUS "Using builtin pybind11")
+set(BUILTIN_PYBIND TRUE)
 
 set(PYBIND11_VERSION "2.2.4")
 set(PYBIND11_DESTDIR "${CMAKE_BINARY_DIR}/${EXTERNAL_DIR}")
@@ -130,7 +135,8 @@ find_package_handle_standard_args(pybind11
   VERSION_VAR PYBIND11_VERSION)
 
 # install(DIRECTORY ${PYBIND11_DESTDIR}/ DESTINATION ".")
-
+else()
+  set(BUILTIN_PYBIND FALSE)
 endif()
 else()
   set(pybind11_FOUND FALSE)
@@ -147,14 +153,11 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DDEBUG")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
 
-find_package(Threads REQUIRED)
-
 SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} ${INCLUDES} -W -O3 -DNDEBUG")
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} " )
 
 include(VcMacros)
 vc_set_preferred_compiler_flags()
-message(STATUS "${Vc_INCLUDE_DIR}")
 
 if (USE_AVX2)
   include_directories(${Vc_INCLUDE_DIR})
@@ -177,16 +180,27 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR}/lib)
 include_directories(${CMAKE_SOURCE_DIR}/lib/generate)
 
-if(pybind11_FOUND)
-  include(pybind11Tools)
-  pybind11_add_module(k40gen ${generate_SOURCES} "src/k40gen/bindings.cpp")
-  add_dependencies(k40gen pybind11)
-endif()
+add_library(generate SHARED ${generate_SOURCES})
 
 if (USE_AVX2)
-target_link_libraries(k40gen PUBLIC ${Vc_LIBRARIES})
-target_include_directories(k40gen
+target_link_libraries(generate PUBLIC ${Vc_LIBRARIES})
+target_include_directories(generate
     PUBLIC ${CMAKE_BINARY_DIR}/include/vectorclass)
-add_dependencies(k40gen vectorclass)
-target_compile_definitions(k40gen PUBLIC "-DVc_IMPL=AVX2")
+add_dependencies(generate vectorclass-install)
+target_compile_definitions(generate PUBLIC "-DVc_IMPL=AVX2")
+endif()
+
+if(pybind11_FOUND)
+  include(pybind11Tools)
+  pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
+  target_include_directories(k40gen PRIVATE ${PYTHON_SITE_PACKAGES}/numpy/core/include)
+  target_link_libraries(k40gen PUBLIC generate)
+  if(BUILTIN_PYBIND)
+	add_dependencies(k40gen pybind11)
+  endif()
+endif()
+
+if(ENABLE_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
 endif()

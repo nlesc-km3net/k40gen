@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include <cassert>
+#include <stdexcept>
 
 #include <tuple>
 #include <storage.h>
@@ -24,6 +25,10 @@ namespace {
 // from fit to Gaussian part of ToT distribution
   const float tot_mean = Constants::tot_mean;
   const float tot_sigma = Constants::tot_sigma;
+
+  using namespace storage;
+  using std::cout;
+  using std::endl;
 }
 
 float GenScalar::dot_product(const std::array<float, 3>& left, const std::array<float, 3>& right) {
@@ -41,15 +46,12 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
   auto& mt = gens.mt;
   auto& flat = gens.flat;
 
-  // Assume times.size() is multiple of 8 here
-  assert(storage::n_hits % 16 == 0);
+  const size_t n_expect = gens.n_expect(time_end - time_start);
+  const float tau_l0 = gens.tau_l0();
 
-  storage_t times; times.resize(storage::n_hits);
-  storage_t values; values.resize(storage::n_hits);
+  storage_t times; times.resize(n_expect);
+  storage_t values; values.resize(n_expect);
   times[0] = 0l;
-
-  storage_t mod_times; mod_times.resize(10000);
-  storage_t mod_values; mod_values.resize(10000);
 
   size_t idx = 0;
 
@@ -62,16 +64,17 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
       long last = 0l;
       while(last < time_end && idx < times.size() - 2) {
         // Generate times
-        float r = -1.f * Constants::tau_l0 * log(flat(mt));
+        float r = -1.f * tau_l0 * log(flat(mt));
         last += static_cast<long>(r + 0.5);
         times[idx++] = last;
       }
 
       // Coincidences
-      idx = fill_coincidences(times, idx, mod_start, time_end, gens);
+      fill_coincidences(times, idx, time_start, time_end, gens);
 
       // fill values
       const size_t value_end = idx + (2 - (idx % 2));
+
       for (size_t vidx = mod_start; vidx < value_end; vidx += 2) {
         long pmt1 = flat_pmt(mt);
         long pmt2 = flat_pmt(mt);

@@ -21,8 +21,6 @@
 #include <vector>
 #include <tuple>
 
-#include <optional>
-
 #include <generate.h>
 #include <storage.h>
 
@@ -49,8 +47,9 @@ Generators::Generators(const int seed0, const int seed1, const std::array<float,
     m_rates{std::move(rates)},
     m_seed_seq{{seed0, seed1}},
     mt{m_seed_seq},
-    coincidence_rate{std::accumulate(std::next(begin(Constants::rates)),
-                                     end(Constants::rates), 0.0)},
+    coincidence_rate{std::accumulate(std::next(begin(m_rates)),
+                                     end(m_rates), 0.0)},
+    // p = 1 - exp(-lambda)
     coincidence{1. - exp(-coincidence_rate / 1e9)},
     flat{0., 1.}
 {
@@ -59,6 +58,10 @@ Generators::Generators(const int seed0, const int seed1, const std::array<float,
 #else
    using namespace GenScalar;
 #endif
+
+   if (m_rates[0] < 1.f) {
+      throw std::domain_error{"L0 rate must be > 1 Hz"};
+   }
 
    // probabilities for coincidences
    for (size_t i = 0; i < prob1D.size(); ++i) {
@@ -81,7 +84,8 @@ float cross_prob(const float ct) {
    return std::exp(ct * (Constants::p2 + ct * (Constants::p3 + ct * Constants::p4)));
 }
 
-size_t fill_coincidences(storage_t& times, size_t idx, const long time_start, const long time_end,
+size_t fill_coincidences(storage_t& times, size_t& idx,
+                         const long time_start, const long time_end,
                          Generators& gen) {
   const auto& prob1D = gen.prob1D;
   const auto& prob2D = gen.prob2D;
@@ -89,8 +93,14 @@ size_t fill_coincidences(storage_t& times, size_t idx, const long time_start, co
   auto& mt = gen.mt;
   auto& flat = gen.flat;
 
+  if (gen.coincidence_rate < 0.001) {
+     return idx;
+  }
+
   // Fill coincidences
+  size_t n = 0;
   for (long t1 = time_start ; t1 < time_end; t1 += gen.coincidence(mt)) {
+    ++n;
     // generate two-fold coincidence
     const unsigned int pmt1 = random_index(prob1D, flat(mt));
     const unsigned int pmt2 = random_index(prob2D[pmt1], flat(mt));
@@ -119,18 +129,21 @@ size_t fill_coincidences(storage_t& times, size_t idx, const long time_start, co
     }
     catch (const std::domain_error&) {}
   }
-  return idx;
+  return n;
 }
 
 std::tuple<storage_t, storage_t> generate(const long start, const long end,
                                           Generators& gens, bool use_avx2) {
 #ifdef USE_AVX2
    if (use_avx2) {
+      std::cout << "Generating AVX2" << std::endl;
       return generate_avx2(start, end, gens);
    } else {
+      std::cout << "Generating scalar" << std::endl;
       return generate_scalar(start, end, gens);
    }
 #else
+   std::cout << "Generating scalar" << std::endl;
    return generate_scalar(start, end, gens);
 #endif
 }

@@ -1,5 +1,6 @@
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/iostream.h>
 
 #include "xtensor/xmath.hpp"
 #include "xtensor/xarray.hpp"
@@ -50,5 +51,8 @@ PYBIND11_MODULE(k40gen, m)
            generate_k40
     )pbdoc";
 
-    m.def("generate_k40", generate_k40, "Generate K40 background");
+    m.def("generate_k40", &generate_k40,
+          py::call_guard<py::scoped_ostream_redirect,
+                         py::scoped_estream_redirect>{},
+          "Generate K40 background");
 }

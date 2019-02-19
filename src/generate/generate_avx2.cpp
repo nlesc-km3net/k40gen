@@ -67,12 +67,13 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
   // Assume times.size() is multiple of 8 here
   assert(storage::n_hits % 16 == 0);
 
-  storage_t times; times.resize(storage::n_hits);
-  storage_t values; values.resize(storage::n_hits);
-  times[0] = 0l;
+  const size_t n_expect = gens.n_expect(time_end - time_start);
+  const float tau_l0 = gens.tau_l0();
+  size_t storage_size = n_expect + long_v::size() - n_expect % long_v::size();
 
-  storage_t mod_times; mod_times.resize(10000);
-  storage_t mod_values; mod_values.resize(10000);
+  storage_t times; times.resize(storage_size);
+  storage_t values; values.resize(storage_size);
+  times[0] = 0l;
 
   auto int_v_to_long_v = [] (const int_v& in) -> pair<long_v, long_v>
     {
@@ -97,7 +98,7 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
 
         // We have to rescale our drawn random numbers here to make sure
         // we have the right coverage
-        r = -1.f * Constants::tau_l0 * log(r);
+        r = -1.f * tau_l0 * log(r);
 
         auto tmp_i = simd_cast<int_v>(r + 0.5f);
         // Prefix sum from stackoverflow:
@@ -123,7 +124,7 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
       }
 
       // Coincidences
-      idx = fill_coincidences(times, idx, mod_start, time_end, gens);
+      fill_coincidences(times, idx, mod_start, time_end, gens);
 
       // fill values
       const size_t value_end = idx + (2 * long_v::size() - (idx % 2 * long_v::size()));
