@@ -1,4 +1,4 @@
-find_package(Catch2)
+find_package(Catch2 QUIET)
 
 if(NOT Catch2_FOUND)
   # catch
@@ -11,9 +11,10 @@ if(NOT Catch2_FOUND)
     URL ${catch_SRC_URI}
     URL_HASH SHA256=a53ef31cf0bd4c1038cdaf8a38d6c88ee762e6aba181f9534a026363bc73e430
     SOURCE_DIR catch2
+    DOWNLOAD_NO_EXTRACT TRUE
     INSTALL_DIR ${catch_ROOTDIR}
     CONFIGURE_COMMAND ""
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>
+    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <DOWNLOADED_FILE> <INSTALL_DIR>
     STEP_TARGETS install)
   set(Catch2_FOUND TRUE)
   set(builtin_catch TRUE)

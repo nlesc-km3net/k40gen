@@ -98,48 +98,10 @@ endif()
 
 if(ENABLE_PYTHON)
 # pybind11
-find_package(pybind11)
-
-if (NOT pybind11_FOUND OR pybind11_VERSION VERSION_LESS "2.1.0")
-message(STATUS "Using builtin pybind11")
-set(BUILTIN_PYBIND TRUE)
-
-set(PYBIND11_VERSION "2.2.4")
-set(PYBIND11_DESTDIR "${CMAKE_BINARY_DIR}/${EXTERNAL_DIR}")
-
-ExternalProject_Add(pybind11
-  URL "https://github.com/pybind/pybind11/archive/v${PYBIND11_VERSION}.tar.gz"
-  URL_HASH SHA256=b69e83658513215b8d1443544d0549b7d231b9f201f6fc787a2b2218b408181e
-  BUILD_IN_SOURCE 0
-  INSTALL_DIR ${PYBIND11_DESTDIR}
-  LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1
-  CMAKE_ARGS -G ${CMAKE_GENERATOR}
-             -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-             -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-             -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}
-             -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-             -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-             -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-             -DPYBIND11_TEST=OFF
-  STEP_TARGETS install
-)
-
-set(PYBIND11_TARGET pybind11)
-set(PYBIND11_LIBRARIES pybind11)
-set(PYBIND11_INCLUDE_DIR "${PYBIND11_DESTDIR}/include")
-set(PYBIND11_CMAKE_MODULES_DIR "${PYBIND11_DESTDIR}/lib/cmake/pybind11")
-
-find_package_handle_standard_args(pybind11
-  FOUND_VAR PYBIND11_FOUND
-  REQUIRED_VARS PYBIND11_INCLUDE_DIR PYBIND11_CMAKE_MODULES_DIR
-  VERSION_VAR PYBIND11_VERSION)
-
-# install(DIRECTORY ${PYBIND11_DESTDIR}/ DESTINATION ".")
-else()
-  set(BUILTIN_PYBIND FALSE)
+find_package(pybind11 QUIET)
+if (NOT pybind11_FOUND)
+message(STATUS "Assuming pybind11 is installed in python site-packages")
 endif()
-else()
-  set(pybind11_FOUND FALSE)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
@@ -190,14 +152,12 @@ add_dependencies(generate vectorclass-install)
 target_compile_definitions(generate PUBLIC "-DVc_IMPL=AVX2")
 endif()
 
-if(pybind11_FOUND)
+if(ENABLE_PYTHON)
   include(pybind11Tools)
   pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
   target_include_directories(k40gen PRIVATE ${PYTHON_SITE_PACKAGES}/numpy/core/include)
+  target_include_directories(k40gen PRIVATE ${PYTHON_SITE_PACKAGES})
   target_link_libraries(k40gen PUBLIC generate)
-  if(BUILTIN_PYBIND)
-	add_dependencies(k40gen pybind11)
-  endif()
 endif()
 
 if(ENABLE_TESTS)
