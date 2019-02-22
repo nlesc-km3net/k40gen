@@ -71,9 +71,8 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
   const float tau_l0 = gens.tau_l0();
   size_t storage_size = n_expect + long_v::size() - n_expect % long_v::size();
 
-  storage_t times; times.resize(storage_size);
-  storage_t values; values.resize(storage_size);
-  times[0] = 0l;
+  storage_t times; times.resize(n_expect);
+  storage_t values; values.resize(n_expect + 2 * long_v::size());
 
   auto int_v_to_long_v = [] (const int_v& in) -> pair<long_v, long_v>
     {
@@ -145,13 +144,13 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
         auto val0 = simd_cast<int_v>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
         auto [val0_first, val0_second] = int_v_to_long_v(val0);
 
-        val0_first.store(&values[idx - 2 * long_v::size()]);
-        val0_second.store(&values[idx - long_v::size()]);
+        val0_first.store(&values[vidx]);
+        val0_second.store(&values[vidx + long_v::size()]);
 
         auto val1 = simd_cast<int_v>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
         auto [val1_first, val1_second] = int_v_to_long_v(val1);
-        val1_first.store(&values[idx]);
-        val1_second.store(&values[idx + long_v::size()]);
+        val1_first.store(&values[vidx + 2 * long_v::size()]);
+        val1_second.store(&values[vidx + 3 *long_v::size()]);
       }
     }
   }

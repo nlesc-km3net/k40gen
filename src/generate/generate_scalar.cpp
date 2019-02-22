@@ -50,8 +50,7 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
   const float tau_l0 = gens.tau_l0();
 
   storage_t times; times.resize(n_expect);
-  storage_t values; values.resize(n_expect);
-  times[0] = 0l;
+  storage_t values; values.resize(n_expect + 1);
 
   size_t idx = 0;
 
@@ -73,9 +72,7 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
       fill_coincidences(times, idx, time_start, time_end, gens);
 
       // fill values
-      const size_t value_end = idx + (2 - (idx % 2));
-
-      for (size_t vidx = mod_start; vidx < value_end; vidx += 2) {
+      for (size_t vidx = mod_start; vidx < idx; vidx += 2) {
         long pmt1 = flat_pmt(mt);
         long pmt2 = flat_pmt(mt);
 
@@ -90,10 +87,10 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
         z1 = fact * tot_sigma * z1 + tot_mean;
 
         auto val0 = static_cast<int>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
-        values[idx - 1] = val0;
+        values[vidx] = val0;
 
         auto val1 = static_cast<int>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
-        values[idx] = val1;
+        values[vidx + 1] = val1;
       }
     }
   }

@@ -23,6 +23,10 @@ endif()
 
 include_directories(include)
 
+if (USE_AVX2)
+  add_definitions("-DUSE_AVX2")
+endif()
+
 add_library(test_functions STATIC
   lib/coincidences.cpp
   lib/generate.cpp)
@@ -34,6 +38,16 @@ add_executable(test_k40gen
 
 target_link_libraries(test_k40gen PRIVATE generate test_functions)
 
-add_test(TestCoincidences test_coincidences)
+add_test(TestK40 test_k40gen)
 
-find_package(ROOT)
+find_package(ROOT COMPONENTS Core Cling Hist Gpad)
+
+add_executable(test_k40gen_root
+  src/test_rates_root.cpp)
+target_include_directories(test_k40gen_root PRIVATE
+  ${ROOT_INCLUDE_DIRS})
+
+target_link_libraries(test_k40gen_root PRIVATE
+  generate
+  test_functions
+  ${ROOT_LIBRARIES})
