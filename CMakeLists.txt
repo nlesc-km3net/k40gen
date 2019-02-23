@@ -156,23 +156,12 @@ if(ENABLE_PYTHON)
   endif()
 
   # pybind11 headers
-  if("${PYBIND11_INCLUDE_DIR}" STREQUAL "")
-    find_package(pybind11 QUIET)
-    if (NOT pybind11_FOUND)
-      message(FAILURE "PYBIND11_INCLUDE_DIR is not set and pybind11 cannot be found")
-    else()
-      target_include_directories(k40gen PRIVATE ${PYBIND11_INCLUDE_DIR})
-    endif()
-  else()
-  endif()
+  find_package(pybind11 REQUIRED)
+  target_include_directories(k40gen PRIVATE ${pybind11_INCLUDE_DIRS})
 
   # numpy headers
-  if("${NUMPY_INCLUDE_DIR}" STREQUAL "")
-    message(STATUS "Assuming numpy headers are installed in python site packages location")
-    target_include_directories(k40gen PRIVATE ${PYTHON_SITE_PACKAGES}/numpy/core/include)
-  else()
-    target_include_directories(k40gen PRIVATE ${NUMPY_INCLUDE_DIR})
-  endif()
+  find_package(NumPy REQUIRED)
+  target_include_directories(k40gen PRIVATE ${NUMPY_INCLUDE_DIRS})
 endif()
 
 if(ENABLE_TESTS)

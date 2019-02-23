@@ -40,51 +40,58 @@
 #============================================================================
 
 # Finding Pybind11 involves calling the Python interpreter
-if(Pybind11_FIND_REQUIRED)
-    find_package(PythonInterp REQUIRED)
+find_package(pybind11 CONFIG QUIET)
+if (pybind11_FOUND)
+  set(PYBIND11_FOUND TRUE)
 else()
+  if(Pybind11_FIND_REQUIRED)
+    find_package(PythonInterp REQUIRED)
+  else()
     find_package(PythonInterp)
-endif()
+  endif()
 
-if(NOT PYTHONINTERP_FOUND)
+  if(NOT PYTHONINTERP_FOUND)
     set(PYBIND11_FOUND FALSE)
-endif()
+  endif()
 
-execute_process(COMMAND "${PYTHON_EXECUTABLE}" "-c"
+  execute_process(COMMAND "${PYTHON_EXECUTABLE}" "-c"
     "import pybind11 as pb; print(pb.__version__); print(pb.get_include());"
     RESULT_VARIABLE _PYBIND11_SEARCH_SUCCESS
     OUTPUT_VARIABLE _PYBIND11_VALUES
     ERROR_VARIABLE _PYBIND11_ERROR_VALUE
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-if(NOT _PYBIND11_SEARCH_SUCCESS MATCHES 0)
+  if(NOT _PYBIND11_SEARCH_SUCCESS MATCHES 0)
     if(Pybind11_FIND_REQUIRED)
-        message(FATAL_ERROR
-            "pybind11 import failure:\n${_PYBIND11_ERROR_VALUE}")
+      message(FATAL_ERROR
+        "pybind11 import failure:\n${_PYBIND11_ERROR_VALUE}")
     endif()
     set(PYBIND11_FOUND FALSE)
+  else()
+    set(PYBIND11_FOUND TRUE)
+  endif()
+
+  if (PYBIND11_FOUND)
+    # Convert the process output into a list
+    string(REGEX REPLACE ";" "\\\\;" _PYBIND11_VALUES ${_PYBIND11_VALUES})
+    string(REGEX REPLACE "\n" ";" _PYBIND11_VALUES ${_PYBIND11_VALUES})
+    list(GET _PYBIND11_VALUES 0 PYBIND11_VERSION)
+    list(GET _PYBIND11_VALUES 1 PYBIND11_INCLUDE_DIRS)
+
+    # Make sure all directory separators are '/'
+    string(REGEX REPLACE "\\\\" "/" PYBIND11_INCLUDE_DIRS ${PYBIND11_INCLUDE_DIRS})
+
+    # Get the major and minor version numbers
+    string(REGEX REPLACE "\\." ";" _PYBIND11_VERSION_LIST ${PYBIND11_VERSION})
+    list(GET _PYBIND11_VERSION_LIST 0 PYBIND11_VERSION_MAJOR)
+    list(GET _PYBIND11_VERSION_LIST 1 PYBIND11_VERSION_MINOR)
+    list(GET _PYBIND11_VERSION_LIST 2 PYBIND11_VERSION_PATCH)
+    string(REGEX MATCH "[0-9]*" PYBIND11_VERSION_PATCH ${PYBIND11_VERSION_PATCH})
+    math(EXPR PYBIND11_VERSION_DECIMAL
+      "(${PYBIND11_VERSION_MAJOR} * 10000) + (${PYBIND11_VERSION_MINOR} * 100) + ${PYBIND11_VERSION_PATCH}")
+
+    find_package_message(PYBIND11
+      "Found Pybind11: version \"${PYBIND11_VERSION}\" ${PYBIND11_INCLUDE_DIRS}"
+      "${PYBIND11_INCLUDE_DIRS}${PYBIND11_VERSION}")
+  endif()
 endif()
-
-# Convert the process output into a list
-string(REGEX REPLACE ";" "\\\\;" _PYBIND11_VALUES ${_PYBIND11_VALUES})
-string(REGEX REPLACE "\n" ";" _PYBIND11_VALUES ${_PYBIND11_VALUES})
-list(GET _PYBIND11_VALUES 0 PYBIND11_VERSION)
-list(GET _PYBIND11_VALUES 1 PYBIND11_INCLUDE_DIRS)
-
-# Make sure all directory separators are '/'
-string(REGEX REPLACE "\\\\" "/" PYBIND11_INCLUDE_DIRS ${PYBIND11_INCLUDE_DIRS})
-
-# Get the major and minor version numbers
-string(REGEX REPLACE "\\." ";" _PYBIND11_VERSION_LIST ${PYBIND11_VERSION})
-list(GET _PYBIND11_VERSION_LIST 0 PYBIND11_VERSION_MAJOR)
-list(GET _PYBIND11_VERSION_LIST 1 PYBIND11_VERSION_MINOR)
-list(GET _PYBIND11_VERSION_LIST 2 PYBIND11_VERSION_PATCH)
-string(REGEX MATCH "[0-9]*" PYBIND11_VERSION_PATCH ${PYBIND11_VERSION_PATCH})
-math(EXPR PYBIND11_VERSION_DECIMAL
-    "(${PYBIND11_VERSION_MAJOR} * 10000) + (${PYBIND11_VERSION_MINOR} * 100) + ${PYBIND11_VERSION_PATCH}")
-
-find_package_message(PYBIND11
-    "Found Pybind11: version \"${PYBIND11_VERSION}\" ${PYBIND11_INCLUDE_DIRS}"
-    "${PYBIND11_INCLUDE_DIRS}${PYBIND11_VERSION}")
-
-set(PYBIND11_FOUND TRUE)

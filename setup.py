@@ -6,8 +6,6 @@ import os
 import re
 import platform
 import subprocess
-import numpy as np
-import pybind11
 
 __version__ = '0.0.1'
 
@@ -41,8 +39,6 @@ class CMakeBuild(build_ext):
             os.path.dirname(self.get_ext_fullpath(ext.name)))
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
-        cmake_args += ['-DNUMPY_INCLUDE_DIR=' + np.get_include()]
-        cmake_args += ['-DPYBIND11_INCLUDE_DIR=' + pybind11.get_include()]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
