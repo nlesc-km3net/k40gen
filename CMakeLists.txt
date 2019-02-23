@@ -10,6 +10,8 @@ option(ENABLE_TESTS "Enable tests" TRUE)
 include(ExternalProject)
 include(FindPackageHandleStandardArgs)
 
+set(EXTERNAL_DIR "external")
+
 if (ENABLE_VC)
 find_package(Vc)
 
@@ -17,7 +19,6 @@ if (NOT Vc_FOUND OR "${Vc_VERSION}" VERSION_LESS "1.3.2")
 
 message(STATUS "Using builtin Vc")
 
-set(EXTERNAL_DIR "external")
 set(Vc_VERSION "1.4.1")
 set(Vc_PROJECT "Vc-${Vc_VERSION}")
 set(Vc_SRC_URI "https://github.com/VcDevel/Vc/archive/${Vc_VERSION}.tar.gz")
@@ -47,14 +48,6 @@ set(Vc_LIBRARIES Vc)
 set(Vc_INCLUDE_DIR "${Vc_DESTDIR}/include")
 set(Vc_CMAKE_MODULES_DIR "${Vc_DESTDIR}/lib/cmake/Vc")
 
-# add_library(VcExt STATIC IMPORTED)
-# set_property(TARGET VcExt PROPERTY IMPORTED_LOCATION ${Vc_LIBRARY})
-# add_dependencies(VcExt VC)
-
-# add_library(Vc INTERFACE)
-# target_include_directories(Vc SYSTEM BEFORE INTERFACE $<BUILD_INTERFACE:${Vc_INCLUDE_DIR}>)
-# target_link_libraries(Vc INTERFACE VcExt)
-
 find_package_handle_standard_args(Vc
   FOUND_VAR Vc_FOUND
   REQUIRED_VARS Vc_INCLUDE_DIR Vc_LIBRARIES Vc_CMAKE_MODULES_DIR
@@ -76,6 +69,7 @@ ExternalProject_Add(vectorclass
   URL_HASH SHA256=f9cb70a3e865dd019b58f449d11f90147ce8ba5f2c60410389ec0ead92944b97
   SOURCE_DIR vectorclass
   INSTALL_DIR ${vectorclass_ROOTDIR}
+  LOG_DOWNLOAD 1 LOG_BUILD 1 LOG_INSTALL 1
   CONFIGURE_COMMAND ""
   BUILD_COMMAND unzip -d <SOURCE_DIR> -o <SOURCE_DIR>/special.zip
   INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>
@@ -145,15 +139,29 @@ target_compile_definitions(generate PUBLIC "-DVc_IMPL=AVX2")
 endif()
 
 if(ENABLE_PYTHON)
+  include(XTensor)
+
   include(pybind11Tools)
   pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
   target_link_libraries(k40gen PUBLIC generate)
+
+  if (xtp_BUILTIN)
+    add_dependencies(k40gen xtp-install)
+    target_include_directories(k40gen PRIVATE ${CMAKE_BINARY_DIR}/external/include)
+  endif()
+
+  # xtensor external dependencies
+  if (USE_AVX2)
+    target_compile_definitions(k40gen PRIVATE "-DXTENSOR_ENABLE_XSIMD")
+  endif()
 
   # pybind11 headers
   if("${PYBIND11_INCLUDE_DIR}" STREQUAL "")
     find_package(pybind11 QUIET)
     if (NOT pybind11_FOUND)
       message(FAILURE "PYBIND11_INCLUDE_DIR is not set and pybind11 cannot be found")
+    else()
+      target_include_directories(k40gen PRIVATE ${PYBIND11_INCLUDE_DIR})
     endif()
   else()
   endif()
