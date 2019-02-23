@@ -16,10 +16,11 @@ if(NOT Catch2_FOUND)
     BUILD_COMMAND ""
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy <DOWNLOADED_FILE> <INSTALL_DIR>
     STEP_TARGETS install)
-  set(Catch2_FOUND TRUE)
-  set(builtin_catch TRUE)
+  include_directories(${CMAKE_BINARY_DIR}/include)
+  set(builtin_Catch2 TRUE)
 else()
-  set(builtin_catch FALSE)
+  include_directories(${Catch2_INCLUDE_DIR})
+  set(builtin_Catch2 FALSE)
 endif()
 
 include_directories(include)
@@ -37,18 +38,24 @@ add_executable(test_k40gen
   src/test_rates.cpp
   src/test_main.cpp)
 
+if(builtin_Catch2)
+  add_dependencies(test_k40gen catch-install)
+endif()
+
 target_link_libraries(test_k40gen PRIVATE generate test_functions)
 
 add_test(TestK40 test_k40gen)
 
-find_package(ROOT COMPONENTS Core Cling Hist Gpad)
+# Optional test binary based on ROOT
+find_package(ROOT QUIET COMPONENTS Core Cling Hist Gpad)
+if (ROOT_FOUND)
+  add_executable(test_k40gen_root
+    src/test_rates_root.cpp)
+  target_include_directories(test_k40gen_root PRIVATE
+    ${ROOT_INCLUDE_DIRS})
 
-add_executable(test_k40gen_root
-  src/test_rates_root.cpp)
-target_include_directories(test_k40gen_root PRIVATE
-  ${ROOT_INCLUDE_DIRS})
-
-target_link_libraries(test_k40gen_root PRIVATE
-  generate
-  test_functions
-  ${ROOT_LIBRARIES})
+  target_link_libraries(test_k40gen_root PRIVATE
+    generate
+    test_functions
+    ${ROOT_LIBRARIES})
+endif()

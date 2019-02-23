@@ -96,14 +96,6 @@ endif()
 
 # install(DIRECTORY ${Vc_DESTDIR}/ DESTINATION ".")
 
-if(ENABLE_PYTHON)
-# pybind11
-find_package(pybind11 QUIET)
-if (NOT pybind11_FOUND)
-message(STATUS "Assuming pybind11 is installed in python site-packages")
-endif()
-endif()
-
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 set(CMAKE_CXX_STANDARD 17)
@@ -155,9 +147,24 @@ endif()
 if(ENABLE_PYTHON)
   include(pybind11Tools)
   pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
-  target_include_directories(k40gen PRIVATE ${PYTHON_SITE_PACKAGES}/numpy/core/include)
-  target_include_directories(k40gen PRIVATE ${PYTHON_SITE_PACKAGES})
   target_link_libraries(k40gen PUBLIC generate)
+
+  # pybind11 headers
+  if("${PYBIND11_INCLUDE_DIR}" STREQUAL "")
+    find_package(pybind11 QUIET)
+    if (NOT pybind11_FOUND)
+      message(FAILURE "PYBIND11_INCLUDE_DIR is not set and pybind11 cannot be found")
+    endif()
+  else()
+  endif()
+
+  # numpy headers
+  if("${NUMPY_INCLUDE_DIR}" STREQUAL "")
+    message(STATUS "Assuming numpy headers are installed in python site packages location")
+    target_include_directories(k40gen PRIVATE ${PYTHON_SITE_PACKAGES}/numpy/core/include)
+  else()
+    target_include_directories(k40gen PRIVATE ${NUMPY_INCLUDE_DIR})
+  endif()
 endif()
 
 if(ENABLE_TESTS)
