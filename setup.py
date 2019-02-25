@@ -1,11 +1,13 @@
 from distutils.version import LooseVersion
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+from setuptools.command.test import test as test_ext
 import sys
 import os
 import re
 import platform
 import subprocess
+import sysconfig
 
 __version__ = '0.0.1'
 
@@ -67,6 +69,30 @@ class CMakeBuild(build_ext):
         print()  # Add an empty line for cleaner output
 
 
+class CatchTestCommand(test_ext):
+    """
+    A custom test runner to execute both Python unittest tests and C++ Catch-
+    lib tests.
+    """
+
+    def distutils_dir_name(self, dname):
+        """Returns the name of a distutils build directory"""
+        dir_name = "{dirname}.{platform}-{version[0]}.{version[1]}"
+        return dir_name.format(dirname=dname,
+                               platform=sysconfig.get_platform(),
+                               version=sys.version_info)
+
+    def run(self):
+        # Run Python tests
+        super(CatchTestCommand, self).run()
+        print("\nPython tests complete, now running C++ tests...\n")
+        # Run catch tests
+        subprocess.call(['ctest -V'],
+                        cwd=os.path.join('build',
+                                         self.distutils_dir_name('temp')),
+                        shell=True)
+
+
 ext_modules = [
     CMakeExtension('k40gen')
 ]
@@ -84,6 +110,6 @@ setup(
     setup_requires=['pytest-runner', 'numpy', 'cmake'],
     install_requires=['numpy'],
     tests_require=["pytest"],
-    cmdclass=dict(build_ext=CMakeBuild),
+    cmdclass=dict(build_ext=CMakeBuild, test=CatchTestCommand),
     zip_safe=False,
 )
