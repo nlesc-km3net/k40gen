@@ -1,12 +1,9 @@
-import k40gen as m
-from unittest import TestCase
-import numpy as np
+def generate():
+    import k40gen as m
+    gens = m.Generators(21341, 1245, [7000., 700., 70., 0.])
+    times = m.generate_k40(0, int(1e8), gens, False)
+    assert(times.shape[0] == 4)
 
 
-class K40GenTest(TestCase):
-
-    def generate(self):
-        # v = np.arange(15).reshape(3, 5)
-        # y = m.readme_example1(v)
-        # np.testing.assert_allclose(y, 1.2853996391883833, 1e-12)
-        return True
+def test_generate():
+    generate()
