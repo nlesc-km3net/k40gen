@@ -83,10 +83,7 @@ class CatchTestCommand(test_ext):
                                version=sys.version_info)
 
     def run(self):
-        # Run Python tests
-        super(CatchTestCommand, self).run()
-        print("\nPython tests complete, now running C++ tests...\n")
-        # Run catch tests
+        # Run CMake tests
         subprocess.call(['ctest -V'],
                         cwd=os.path.join('build',
                                          self.distutils_dir_name('temp')),

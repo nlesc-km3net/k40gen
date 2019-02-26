@@ -59,7 +59,6 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
     for (int mod = 0; mod < storage::n_mod; ++mod) {
       size_t mod_start = idx;
 
-      long offset = 0l;
       long last = 0l;
       while(last < time_end && idx < times.size() - 2) {
         // Generate times

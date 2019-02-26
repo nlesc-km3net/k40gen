@@ -32,14 +32,6 @@ namespace {
   using std::pair;
   using std::vector;
   using std::array;
-
-  // from fit to Gaussian part of ToT distribution
-  const float_t tot_mean = 26.936f;
-  const float_t tot_sigma = 2.44078f;
-
-  const int n_pmt = 31;
-
-  const int random_method = 2;
 }
 
 Generators::Generators(const int seed0, const int seed1, const std::array<float, 4> rates)
