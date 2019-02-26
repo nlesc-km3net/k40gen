@@ -9,13 +9,16 @@
 
 #include <TApplication.h>
 #include <TH1.h>
+#include <TF1.h>
+#include <TFitResult.h>
 #include <TCanvas.h>
+#include <TROOT.h>
 
 using namespace std;
 
 int main(int argc, char* argv[]) {
 
-   TApplication app{"test_rate", &argc, argv};
+   gROOT->SetBatch();
 
    map<bool, unique_ptr<TH1I>> histos;
 
@@ -40,6 +43,11 @@ int main(int argc, char* argv[]) {
             time_histo->Fill(times[i + 1] - times[i]);
          }
       }
+      TF1 expo{"exp", "expo", time_histo->GetBinCenter(1),
+            time_histo->GetBinCenter(1 + time_histo->GetNbinsX())};
+      auto fit = time_histo->Fit(&expo, "RS");
+      // parameter is negative
+      cout << std::fabs(rates[0] + (fit->Parameter(1) * 1e9)) / rates[0]  << endl;
    }
 
    TCanvas canvas{"canvas", "canvas", 600, 800};
@@ -49,5 +57,5 @@ int main(int argc, char* argv[]) {
       canvas.cd(arch + 1);
       histo->Draw();
    }
-   app.Run();
+   canvas.Print("distributions.png");
 }

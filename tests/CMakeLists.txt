@@ -27,7 +27,7 @@ endif()
 include_directories(include)
 
 if (USE_AVX2)
-  add_definitions("-DUSE_AVX2")
+  add_definitions("-DUSE_AVX2=1")
 endif()
 
 add_library(test_functions STATIC
@@ -59,4 +59,11 @@ if (ROOT_FOUND)
     generate
     test_functions
     ${ROOT_LIBRARIES})
+endif()
+
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_Interpreter_FOUND)
+  add_test(NAME pytest
+	COMMAND Python3::Interpreter -m pytest -rsv ${PROJECT_SOURCE_DIR}/tests/python/test_extension.py
+	WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()

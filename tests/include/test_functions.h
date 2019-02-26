@@ -11,6 +11,6 @@ struct get_n {
   }
 };
 
-std::pair<double, double> generate_l0(float l0_rate, bool use_avx2);
+std::pair<double, double> generate_l0(float l0_rate, long dt, bool use_avx2);
 
 std::pair<double, double> coincidence_rate(std::array<float, 4> rates);

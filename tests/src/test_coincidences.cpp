@@ -12,11 +12,11 @@ TEST_CASE( "Coincidences make sense", "[coincidence]" ) {
                                auto coincidence_rate = std::accumulate(std::next(begin(rates)), end(rates), 0.);
                                REQUIRE(rate == coincidence_rate);
                                if (rate != 0.) {
-                                  REQUIRE(std::abs(rate - av) / rate < 1e-4);
+                                  REQUIRE(std::abs(rate - av) / rate < 1e-3);
                                }
                             };
 
    check_coincidence({7000., 700., 70., 7.});
-   check_coincidence({1000., 100.});
+   check_coincidence({10000., 1000.});
    check_coincidence({7000.});
 }

@@ -39,6 +39,33 @@ float GenScalar::dot_product(const std::array<float, 3>& left, const std::array<
   return r;
 }
 
+void fill_values(long start, long last, storage_t& values, Generators& gens, int pmt) {
+   // fill values
+   for (size_t vidx = start; vidx < last; vidx += 2) {
+      int pmt1 = pmt, pmt2 = pmt;
+      if (pmt == -1) {
+         pmt1 = flat_pmt(mt);
+         pmt2 = flat_pmt(mt);
+      }
+
+      auto u1 = flat(mt);
+      auto u2 = flat(mt) * Constants::two_pi;
+
+      auto fact = sqrt(-2.0f * log(u1));
+      float z0 = sin(u2);
+      float z1 = cos(u2);
+
+      z0 = fact * tot_sigma * z0 + tot_mean;
+      z1 = fact * tot_sigma * z1 + tot_mean;
+
+      auto val0 = static_cast<int>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+      values[vidx] = val0;
+
+      auto val1 = static_cast<int>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+      values[vidx + 1] = val1;
+   }
+}
+
 std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const long time_end,
                                                  Generators& gens) {
 
@@ -59,38 +86,21 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
     for (int mod = 0; mod < storage::n_mod; ++mod) {
       size_t mod_start = idx;
 
-      long last = 0l;
-      while(last < time_end && idx < times.size() - 2) {
-        // Generate times
-        float r = -1.f * tau_l0 * log(flat(mt));
-        last += static_cast<long>(r + 0.5);
-        times[idx++] = last;
+      for (int pmt = 0; mod < storage::n_pmt; ++pmt) {
+         long last = 0l;
+         while(last < time_end && idx < times.size() - 2) {
+            // Generate times
+            float r = -1.f * tau_l0 * log(flat(mt));
+            last += static_cast<long>(r + 0.5);
+            times[idx++] = last;
+         }
+         fill_values(..., pmt);
       }
 
       // Coincidences
       fill_coincidences(times, idx, time_start, time_end, gens);
 
-      // fill values
-      for (size_t vidx = mod_start; vidx < idx; vidx += 2) {
-        long pmt1 = flat_pmt(mt);
-        long pmt2 = flat_pmt(mt);
-
-        auto u1 = flat(mt);
-        auto u2 = flat(mt) * Constants::two_pi;
-
-        auto fact = sqrt(-2.0f * log(u1));
-        float z0 = sin(u2);
-        float z1 = cos(u2);
-
-        z0 = fact * tot_sigma * z0 + tot_mean;
-        z1 = fact * tot_sigma * z1 + tot_mean;
-
-        auto val0 = static_cast<int>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
-        values[vidx] = val0;
-
-        auto val1 = static_cast<int>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
-        values[vidx + 1] = val1;
-      }
+      fill_values(..., -1);
     }
   }
   times.resize(idx);
