@@ -25,9 +25,7 @@
 #include "aligned_allocator.h"
 
 namespace storage {
-   const int n_dom = 115, n_mod = 18;
-   extern int n_per_mod;
-   extern int n_hits;
+  extern int n_per_mod;
 }
 
 #ifdef HAVE_CUDA

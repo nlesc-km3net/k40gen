@@ -1,6 +1,8 @@
 #pragma once
 
 #include <array>
+#include <unordered_map>
+#include <tuple>
 
 template <std::size_t N>
 struct get_n {
@@ -13,4 +15,5 @@ struct get_n {
 
 std::pair<double, double> generate_l0(float l0_rate, long dt, bool use_avx2);
 
-std::pair<double, double> coincidence_rate(std::array<float, 4> rates);
+std::tuple<double, double, std::unordered_map<size_t, double>>
+coincidence_rate(std::array<float, 4> rates);

@@ -26,7 +26,6 @@
 
 
 namespace {
-
   using std::cout;
   using std::endl;
   using std::pair;
@@ -76,31 +75,35 @@ float cross_prob(const float ct) {
    return std::exp(ct * (Constants::p2 + ct * (Constants::p3 + ct * Constants::p4)));
 }
 
-size_t fill_coincidences(storage_t& times, size_t& idx,
-                         const long time_start, const long time_end,
-                         Generators& gen) {
+std::tuple<array<unsigned int, 4>, size_t>
+fill_coincidences(storage_t& times, size_t idx,
+                  const long time_start, const long time_end,
+                  Generators& gen) {
   const auto& prob1D = gen.prob1D;
   const auto& prob2D = gen.prob2D;
   auto& probND = gen.probND;
   auto& mt = gen.mt;
   auto& flat = gen.flat;
 
+  array<unsigned int, 4> pmts;
+
   if (gen.coincidence_rate < 0.001) {
-     return idx;
+    return {pmts, 0};
   }
 
   // Fill coincidences
   size_t n = 0;
   for (long t1 = time_start ; t1 < time_end; t1 += gen.coincidence(mt)) {
-    ++n;
     // generate two-fold coincidence
     const unsigned int pmt1 = random_index(prob1D, flat(mt));
     const unsigned int pmt2 = random_index(prob2D[pmt1], flat(mt));
 
+    pmts[n++] = pmt1;
+    pmts[n++] = pmt2;
+
     std::normal_distribution<double> gauss(t1, 0.5);
     times[++idx] = std::lround(gauss(mt));
     times[++idx] = std::lround(gauss(mt));
-
     try {
       // generate larger than two-fold coincidences, if any
       unsigned int M = random_index(gen.rates(), flat(mt));
@@ -114,14 +117,14 @@ size_t fill_coincidences(storage_t& times, size_t& idx,
 
           probND[pmtN] = 0.0;
           pmtN = random_index(probND, flat(mt));
-
+          pmts[n++] = pmtN;
           times[++idx] = std::lround(gauss(mt));
         }
       }
     }
     catch (const std::domain_error&) {}
   }
-  return n;
+  return {pmts, n};
 }
 
 std::tuple<storage_t, storage_t> generate(const long start, const long end,

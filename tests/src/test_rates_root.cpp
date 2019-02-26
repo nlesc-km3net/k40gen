@@ -16,7 +16,7 @@
 
 using namespace std;
 
-int main(int argc, char* argv[]) {
+int main() {
 
    gROOT->SetBatch();
 
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 
       Generators gens{1052, 9523, rates};
 
-      long dt = std::lround(1e8);
+      long dt = std::lround(1e6);
 
       long time_start = 0, time_end = time_start + dt;
 

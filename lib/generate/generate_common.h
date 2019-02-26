@@ -32,6 +32,8 @@ namespace Constants {
   const float p3 = -0.68884f;
   const float p4 = 1.3911f;
 
+  const int n_dom = 115;
+  const int n_mod = 18;
   const int n_pmt = 31;
 
   // from fit to Gaussian part of ToT distribution
@@ -79,7 +81,7 @@ public:
     if (n_per_pmt > std::numeric_limits<float>::max()) {
       throw std::domain_error{"rate of " + std::to_string(n_per_pmt) + " is too large"};
     }
-    return std::lround(storage::n_dom * storage::n_mod * (float)n_per_pmt);
+    return std::lround(Constants::n_dom * Constants::n_mod * (float)n_per_pmt);
   }
 
 };
@@ -110,9 +112,10 @@ unsigned int random_index(const Container& buffer, const double random) {
   }
 }
 
-size_t fill_coincidences(storage_t& times, size_t& idx,
-                         const long time_start, const long time_end,
-                         Generators& gens);
+std::tuple<std::array<unsigned int, 4>, size_t>
+fill_coincidences(storage_t& times, size_t idx,
+                  const long time_start, const long time_end,
+                  Generators& gens);
 
 std::tuple<storage_t, storage_t> generate(const long start, const long end,
                                           Generators& gens, bool use_avx2);

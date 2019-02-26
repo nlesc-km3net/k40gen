@@ -16,4 +16,3 @@
 #include "storage.h"
 
 int storage::n_per_mod = 21760;
-int storage::n_hits = n_dom * n_mod * n_per_mod;

@@ -65,14 +65,14 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
   random.init(gens.seeds()[0], gens.seeds()[1]);
 
   // Assume times.size() is multiple of 8 here
-  assert(storage::n_hits % 16 == 0);
+  // assert(storage::n_hits % 16 == 0);
 
   const size_t n_expect = gens.n_expect(time_end - time_start);
   const float tau_l0 = gens.tau_l0();
   size_t storage_size = n_expect + long_v::size() - n_expect % long_v::size();
 
-  storage_t times; times.resize(n_expect);
-  storage_t values; values.resize(n_expect + 2 * long_v::size());
+  storage_t times; times.resize(storage_size);
+  storage_t values; values.resize(storage_size + 2 * long_v::size());
 
   auto int_v_to_long_v = [] (const int_v& in) -> pair<long_v, long_v>
     {
@@ -83,47 +83,48 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
   size_t idx = 0;
 
   // First generate some data
-  for (int dom = 0; dom < storage::n_dom; ++dom) {
-    for (int mod = 0; mod < storage::n_mod; ++mod) {
+  for (int dom = 0; dom < Constants::n_dom; ++dom) {
+    for (int mod = 0; mod < Constants::n_mod; ++mod) {
       size_t mod_start = idx;
 
-      long_v offset;
-      offset.data() = _mm256_set1_epi64x(0l);
-      long last = 0l;
-      while(last < time_end && idx < times.size() - 2 * long_v::size()) {
-        // Generate times
-        auto tmp = random.random8f();
-        float_v r{tmp};
+      for (int pmt = 0; pmt < Constants::n_pmt; ++pmt) {
+        long_v offset;
+        offset.data() = _mm256_set1_epi64x(time_start);
+        long last = time_start;
+        while(last < time_end && idx < times.size() - 2 * long_v::size()) {
+          // Generate times
+          auto tmp = random.random8f();
+          float_v r{tmp};
 
-        // We have to rescale our drawn random numbers here to make sure
-        // we have the right coverage
-        r = -1.f * tau_l0 * log(r);
+          // Exponentially distributed numbers
+          r = -1.f * tau_l0 * log(r);
 
-        auto tmp_i = simd_cast<int_v>(r + 0.5f);
-        // Prefix sum from stackoverflow:
-        // https://stackoverflow.com/questions/19494114/parallel-prefix-cumulative-sum-with-sse
-        auto out = scan_AVX(tmp_i);
+          auto tmp_i = simd_cast<int_v>(r + 0.5f);
+          // Prefix sum from stackoverflow:
+          // https://stackoverflow.com/questions/19494114/parallel-prefix-cumulative-sum-with-sse
+          auto out = scan_AVX(tmp_i);
 
-        auto [first, second] = int_v_to_long_v(out);
-        first.data() = Vc::AVX::add_epi64(first.data(), offset.data());
-        second.data() = Vc::AVX::add_epi64(second.data(), offset.data());
+          auto [first, second] = int_v_to_long_v(out);
+          first.data() = Vc::AVX::add_epi64(first.data(), offset.data());
+          second.data() = Vc::AVX::add_epi64(second.data(), offset.data());
 
-        first.store(&times[idx]);
-        second.store(&times[idx + long_v::size()]);
-        last = second[long_v::size() - 1];
+          first.store(&times[idx]);
+          second.store(&times[idx + long_v::size()]);
+          last = second[long_v::size() - 1];
 
-        //broadcast last element
-        offset.data() = permute4q<3, 3, 3, 3>(second.data());
+          //broadcast last element
+          offset.data() = permute4q<3, 3, 3, 3>(second.data());
 
-        // Generate ToT as a gauss and pmt flat.
-        // Only do it every other pass to make use of the double
-        // output of the Box-Muller method
-        // When filling, fill the past and current indices
-        idx += 2 * long_v::size();
+          // Generate ToT as a gauss and pmt flat.
+          // Only do it every other pass to make use of the double
+          // output of the Box-Muller method
+          // When filling, fill the past and current indices
+          idx += 2 * long_v::size();
+        }
       }
-
       // Coincidences
-      fill_coincidences(times, idx, mod_start, time_end, gens);
+      auto [pmts, n_coincidence] = fill_coincidences(times, idx, time_start, time_end, gens);
+      idx += n_coincidence;
 
       // fill values
       const size_t value_end = idx + (2 * long_v::size() - (idx % 2 * long_v::size()));

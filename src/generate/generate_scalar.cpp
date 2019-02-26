@@ -15,8 +15,10 @@
  */
 #include <cassert>
 #include <stdexcept>
+#include <vector>
 
 #include <tuple>
+#include <optional>
 #include <storage.h>
 #include <generate_common.h>
 #include <generate_scalar.h>
@@ -29,6 +31,7 @@ namespace {
   using namespace storage;
   using std::cout;
   using std::endl;
+  using std::array;
 }
 
 float GenScalar::dot_product(const std::array<float, 3>& left, const std::array<float, 3>& right) {
@@ -39,37 +42,49 @@ float GenScalar::dot_product(const std::array<float, 3>& left, const std::array<
   return r;
 }
 
-void fill_values(long start, long last, storage_t& values, Generators& gens, int pmt) {
+void fill_values_scalar(long idx_start, long idx_end, storage_t& values, Generators& gens, int dom, int mod,
+                        const std::optional<array<unsigned int, 4>>& pmts) {
    // fill values
-   for (size_t vidx = start; vidx < last; vidx += 2) {
-      int pmt1 = pmt, pmt2 = pmt;
-      if (pmt == -1) {
-         pmt1 = flat_pmt(mt);
-         pmt2 = flat_pmt(mt);
-      }
+  std::uniform_int_distribution<long> flat_pmt(0, 31);
+  auto& mt = gens.mt;
+  auto& flat = gens.flat;
 
-      auto u1 = flat(mt);
-      auto u2 = flat(mt) * Constants::two_pi;
+  if (pmts) {
+    assert((idx_end - idx_start) < pmts->size());
+  }
 
-      auto fact = sqrt(-2.0f * log(u1));
-      float z0 = sin(u2);
-      float z1 = cos(u2);
+  size_t n = 0;
+  for (long vidx = idx_start; vidx < idx_end; vidx += 2) {
+    unsigned int pmt1 = 0, pmt2 = 0;
+    if (pmts) {
+      pmt1 = (*pmts)[n++];
+      pmt2 = (*pmts)[n++];
+    } else {
+      pmt1 = flat_pmt(mt);
+      pmt2 = flat_pmt(mt);
+    }
 
-      z0 = fact * tot_sigma * z0 + tot_mean;
-      z1 = fact * tot_sigma * z1 + tot_mean;
+    auto u1 = flat(mt);
+    auto u2 = flat(mt) * Constants::two_pi;
 
-      auto val0 = static_cast<int>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
-      values[vidx] = val0;
+    auto fact = sqrt(-2.0f * log(u1));
+    float z0 = sin(u2);
+    float z1 = cos(u2);
 
-      auto val1 = static_cast<int>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
-      values[vidx + 1] = val1;
-   }
+    z0 = fact * tot_sigma * z0 + tot_mean;
+    z1 = fact * tot_sigma * z1 + tot_mean;
+
+    auto val0 = static_cast<int>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+    values[vidx] = val0;
+
+    auto val1 = static_cast<int>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+    values[vidx + 1] = val1;
+  }
 }
 
 std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const long time_end,
                                                  Generators& gens) {
 
-  std::uniform_int_distribution<long> flat_pmt(0, 31);
   auto& mt = gens.mt;
   auto& flat = gens.flat;
 
@@ -82,25 +97,27 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
   size_t idx = 0;
 
   // First generate some data
-  for (int dom = 0; dom < storage::n_dom; ++dom) {
-    for (int mod = 0; mod < storage::n_mod; ++mod) {
+  for (int dom = 0; dom < Constants::n_dom; ++dom) {
+    for (int mod = 0; mod < Constants::n_mod; ++mod) {
       size_t mod_start = idx;
 
-      for (int pmt = 0; mod < storage::n_pmt; ++pmt) {
-         long last = 0l;
+      for (int pmt = 0; pmt < Constants::n_pmt; ++pmt) {
+         long last = time_start;
          while(last < time_end && idx < times.size() - 2) {
             // Generate times
             float r = -1.f * tau_l0 * log(flat(mt));
             last += static_cast<long>(r + 0.5);
             times[idx++] = last;
          }
-         fill_values(..., pmt);
       }
+      fill_values_scalar(mod_start, idx, values, gens, dom, mod, {});
 
       // Coincidences
-      fill_coincidences(times, idx, time_start, time_end, gens);
+      auto [pmts, n_coincidence] = fill_coincidences(times, idx, time_start, time_end, gens);
+      idx += n_coincidence;
 
-      fill_values(..., -1);
+      fill_values_scalar(mod_start, idx, values, gens, dom, mod, pmts);
+
     }
   }
   times.resize(idx);
