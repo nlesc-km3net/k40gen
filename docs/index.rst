@@ -6,5 +6,4 @@ Contents:
 .. toctree::
    :maxdepth: 1
 
-   KM3NeT-bkg-gen 
-
+   k40gen
