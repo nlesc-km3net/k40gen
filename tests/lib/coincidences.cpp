@@ -7,10 +7,11 @@
 #include <generate.h>
 #include <storage.h>
 
-using namespace std;
+namespace {
+   using namespace std;
+}
 
-tuple<double, double>
-coincidence_rate(array<float, 4> rates) {
+tuple<double, double> coincidence_rate(array<float, 4> rates) {
 
    Generators gens{1052, 9523, rates};
    auto l1_rate = std::accumulate(std::next(begin(rates)), end(rates), 0.);
@@ -23,7 +24,7 @@ coincidence_rate(array<float, 4> rates) {
    long time_start = 0, time_end = 0;
    double av = 0.;
    const int n_iter = 5000;
-
+   cout << "Generating coincidences at " << l1_rate << "Hz\n";
    for (int i = 0; i < n_iter; ++i) {
       time_end += dt;
       auto [n_times, n_coincidences] = fill_coincidences(times, pmts, 0ul, time_start, time_end, gens);
