@@ -16,6 +16,8 @@
 #include <cassert>
 #include <stdexcept>
 #include <vector>
+#include <functional>
+#include <iostream>
 
 #include <tuple>
 #include <optional>
@@ -28,9 +30,7 @@ namespace {
   const float tot_mean = Constants::tot_mean;
   const float tot_sigma = Constants::tot_sigma;
 
-  using namespace storage;
   using std::cout;
-  using std::endl;
   using std::array;
 }
 
@@ -43,26 +43,15 @@ float GenScalar::dot_product(const std::array<float, 3>& left, const std::array<
 }
 
 void fill_values_scalar(long idx_start, long idx_end, storage_t& values, Generators& gens, int dom, int mod,
-                        const std::optional<array<unsigned int, 4>>& pmts) {
+                        std::function<unsigned int(size_t)> pmt_fun) {
    // fill values
-  std::uniform_int_distribution<long> flat_pmt(0, 31);
   auto& mt = gens.mt;
   auto& flat = gens.flat;
 
-  if (pmts) {
-    assert((idx_end - idx_start) < pmts->size());
-  }
-
   size_t n = 0;
   for (long vidx = idx_start; vidx < idx_end; vidx += 2) {
-    unsigned int pmt1 = 0, pmt2 = 0;
-    if (pmts) {
-      pmt1 = (*pmts)[n++];
-      pmt2 = (*pmts)[n++];
-    } else {
-      pmt1 = flat_pmt(mt);
-      pmt2 = flat_pmt(mt);
-    }
+    auto pmt1 = pmt_fun(n++);
+    auto pmt2 = pmt_fun(n++);
 
     auto u1 = flat(mt);
     auto u2 = flat(mt) * Constants::two_pi;
@@ -88,36 +77,39 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
   auto& mt = gens.mt;
   auto& flat = gens.flat;
 
-  const size_t n_expect = gens.n_expect(time_end - time_start);
+  const size_t n_expect = gens.n_expect(time_end - time_start, true);
   const float tau_l0 = gens.tau_l0();
 
   storage_t times; times.resize(n_expect);
   storage_t values; values.resize(n_expect + 1);
-
+  const size_t n_expect_pmts = gens.n_expect(time_end - time_start, false);
+  pmts_t pmts(n_expect_pmts, 0);
   size_t idx = 0;
 
   // First generate some data
   for (int dom = 0; dom < Constants::n_dom; ++dom) {
     for (int mod = 0; mod < Constants::n_mod; ++mod) {
-      size_t mod_start = idx;
-
       for (int pmt = 0; pmt < Constants::n_pmt; ++pmt) {
-         long last = time_start;
-         while(last < time_end && idx < times.size() - 2) {
-            // Generate times
-            float r = -1.f * tau_l0 * log(flat(mt));
-            last += static_cast<long>(r + 0.5);
-            times[idx++] = last;
-         }
+        size_t pmt_start = idx;
+        long last = time_start;
+        while(last < time_end && idx < times.size() - 2) {
+          // Generate times
+          float r = -1.f * tau_l0 * log(flat(mt));
+          last += static_cast<long>(r + 0.5);
+          times[idx++] = last;
+        }
+        fill_values_scalar(pmt_start, idx, values, gens, dom, mod,
+                           [pmt](size_t) { return pmt; });
       }
-      fill_values_scalar(mod_start, idx, values, gens, dom, mod, {});
 
       // Coincidences
-      auto [pmts, n_coincidence] = fill_coincidences(times, idx, time_start, time_end, gens);
-      idx += n_coincidence;
-
-      fill_values_scalar(mod_start, idx, values, gens, dom, mod, pmts);
-
+      auto [n_times, _] = fill_coincidences(times, pmts, idx, time_start, time_end, gens);
+      fill_values_scalar(idx, idx + n_times, values, gens, dom, mod,
+                         [&pmts](size_t n) {
+                           assert(n < pmts.size());
+                           return pmts[n];
+                         });
+      idx += n_times;
     }
   }
   times.resize(idx);

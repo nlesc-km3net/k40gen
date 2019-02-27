@@ -18,7 +18,7 @@ pair<double, double> generate_l0(float l0_rate, long dt, bool use_avx2) {
    double av = 0.;
    const size_t n_times = times.size();
    for (size_t i = 0; i < n_times - 1; ++i) {
-      if (((values[i + 1]) >> 13) == (values[i] >> 13)) {
+      if (((values[i + 1]) >> 8) == (values[i] >> 8)) {
          av += static_cast<double>(times[i + 1] - times[i]) / n_times;
       }
    }

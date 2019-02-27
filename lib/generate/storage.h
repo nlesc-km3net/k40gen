@@ -15,23 +15,15 @@
  */
 #pragma once
 
-#ifdef HAVE_CUDA
-#include <thrust/host_vector.h>
-#include <thrust/system/cuda/experimental/pinned_allocator.h>
-#else
 #include <vector>
-#endif
 
-#include "aligned_allocator.h"
-
-namespace storage {
-  extern int n_per_mod;
-}
-
-#ifdef HAVE_CUDA
-using storage_t = thrust::host_vector<long, thrust::cuda::experimental::pinned_allocator<int>>;
+#ifdef USE_AVX2
+#include <Vc/Allocator>
+using storage_t = std::vector<long, Vc::Allocator<long>>;
+using pmts_t = std::vector<int, Vc::Allocator<int>>;
 #else
-using storage_t = std::vector<long, aligned_allocator<long>>;
+using storage_t = std::vector<long>;
+using pmts_t = std::vector<int>;
 #endif
 
 using queue_t = std::vector<std::tuple<storage_t, storage_t>>;

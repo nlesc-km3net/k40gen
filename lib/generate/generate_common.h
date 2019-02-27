@@ -74,14 +74,17 @@ public:
      return 1.0e9f / m_rates[0];
   }
 
-  size_t n_expect(const long interval) const {
-    float total_rate = std::accumulate(begin(m_rates), end(m_rates), 0.f);
+  size_t n_expect(const long interval, bool include_l0) const {
+    using namespace Constants;
+    float l0_rate = include_l0 ? m_rates[0] : 0.f;
+    float l1_rate = std::accumulate(std::next(begin(m_rates)), end(m_rates), 0.f);
     // Fudge with 30% extra space to avoid reallocating
-    double n_per_pmt = 1.3 * total_rate * (double)(interval) / 1e9;
-    if (n_per_pmt > std::numeric_limits<float>::max()) {
+    double n_per_pmt = 1.3 * (l0_rate + 3.f * l1_rate) * (double)(interval) / 1e9;
+    auto n_pmts = n_dom * n_mod * n_pmt;
+    if (n_per_pmt > std::numeric_limits<float>::max() / n_pmts) {
       throw std::domain_error{"rate of " + std::to_string(n_per_pmt) + " is too large"};
     }
-    return std::lround(Constants::n_dom * Constants::n_mod * (float)n_per_pmt);
+    return std::lround(n_pmts * (float)n_per_pmt);
   }
 
 };
@@ -112,8 +115,8 @@ unsigned int random_index(const Container& buffer, const double random) {
   }
 }
 
-std::tuple<std::array<unsigned int, 4>, size_t>
-fill_coincidences(storage_t& times, size_t idx,
+std::tuple<size_t, size_t>
+fill_coincidences(storage_t& times, pmts_t& pmts, size_t idx,
                   const long time_start, const long time_end,
                   Generators& gens);
 

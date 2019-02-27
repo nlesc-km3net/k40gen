@@ -15,6 +15,7 @@
  */
 #include <cassert>
 #include <tuple>
+#include <functional>
 
 #include <Vc/Vc>
 #include <instrset.h>
@@ -58,6 +59,45 @@ inline int_v scan_AVX(int_v x) {
   return x;
 }
 
+auto int_v_to_long_v(const int_v& in) -> pair<long_v, long_v>
+{
+   return {Vc::AvxIntrinsics::cvtepi32_epi64(Vc::AVX::lo128(in.data())),
+           Vc::AvxIntrinsics::cvtepi32_epi64(Vc::AVX::hi128(in.data()))};
+};
+
+void fill_values_avx2(long idx_start, long idx_end, storage_t& values, Ranvec1& random,
+                      int dom, int mod,
+                      std::function<int_v(size_t)> pmt_fun) {
+   // fill values
+   size_t n = 0;
+   const long value_end = idx_end + (2 * long_v::size() - (idx_end % 2 * long_v::size()));
+   for (long vidx = idx_start; vidx < value_end; vidx += 2 * long_v::size()) {
+      int_v pmt1 = pmt_fun(n++);
+      int_v pmt2 = pmt_fun(n++);
+
+      auto u1 = float_v{random.random8f()};
+      auto u2 = float_v{random.random8f()} * Constants::two_pi;
+
+      auto fact = sqrt(-2.0f * log(u1));
+      float_v z0, z1;
+      sincos(u2, &z0, &z1);
+
+      z0 = fact * tot_sigma * z0 + tot_mean;
+      z1 = fact * tot_sigma * z1 + tot_mean;
+
+      auto val0 = simd_cast<int_v>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+      auto [val0_first, val0_second] = int_v_to_long_v(val0);
+
+      val0_first.store(&values[vidx]);
+      val0_second.store(&values[vidx + long_v::size()]);
+
+      auto val1 = simd_cast<int_v>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+      auto [val1_first, val1_second] = int_v_to_long_v(val1);
+      val1_first.store(&values[vidx + 2 * long_v::size()]);
+      val1_second.store(&values[vidx + 3 *long_v::size()]);
+   }
+}
+
 std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long time_end,
                                                Generators& gens) {
 
@@ -67,27 +107,22 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
   // Assume times.size() is multiple of 8 here
   // assert(storage::n_hits % 16 == 0);
 
-  const size_t n_expect = gens.n_expect(time_end - time_start);
+  const size_t n_expect = gens.n_expect(time_end - time_start, true);
+  const size_t n_expect_pmts = gens.n_expect(time_end - time_start, false);
   const float tau_l0 = gens.tau_l0();
   size_t storage_size = n_expect + long_v::size() - n_expect % long_v::size();
 
   storage_t times; times.resize(storage_size);
   storage_t values; values.resize(storage_size + 2 * long_v::size());
-
-  auto int_v_to_long_v = [] (const int_v& in) -> pair<long_v, long_v>
-    {
-     return {Vc::AvxIntrinsics::cvtepi32_epi64(Vc::AVX::lo128(in.data())),
-             Vc::AvxIntrinsics::cvtepi32_epi64(Vc::AVX::hi128(in.data()))};
-    };
+  pmts_t pmts(n_expect_pmts + long_v::size() - n_expect_pmts % long_v::size(), 0);
 
   size_t idx = 0;
 
   // First generate some data
   for (int dom = 0; dom < Constants::n_dom; ++dom) {
     for (int mod = 0; mod < Constants::n_mod; ++mod) {
-      size_t mod_start = idx;
-
       for (int pmt = 0; pmt < Constants::n_pmt; ++pmt) {
+        size_t pmt_start = idx;
         long_v offset;
         offset.data() = _mm256_set1_epi64x(time_start);
         long last = time_start;
@@ -121,38 +156,20 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
           // When filling, fill the past and current indices
           idx += 2 * long_v::size();
         }
+
+        fill_values_avx2(pmt_start, idx, values, random, dom, mod,
+                         [pmt](size_t) { return int_v(pmt); });
+
       }
+
       // Coincidences
-      auto [pmts, n_coincidence] = fill_coincidences(times, idx, time_start, time_end, gens);
-      idx += n_coincidence;
+      auto [n_times, _] = fill_coincidences(times, pmts, idx, time_start, time_end, gens);
+      fill_values_avx2(idx, idx + n_times, values, random, dom, mod,
+                       [&pmts](size_t n) {
+                          return int_v(pmts.data() + n * int_v::size());
+                       });
+      idx += n_times;
 
-      // fill values
-      const size_t value_end = idx + (2 * long_v::size() - (idx % 2 * long_v::size()));
-      for (size_t vidx = mod_start; vidx < value_end; vidx += 2 * long_v::size()) {
-        int_v pmt1{random.random8i(0, 31)};
-        int_v pmt2{random.random8i(0, 31)};
-
-        auto u1 = float_v{random.random8f()};
-        auto u2 = float_v{random.random8f()} * Constants::two_pi;
-
-        auto fact = sqrt(-2.0f * log(u1));
-        float_v z0, z1;
-        sincos(u2, &z0, &z1);
-
-        z0 = fact * tot_sigma * z0 + tot_mean;
-        z1 = fact * tot_sigma * z1 + tot_mean;
-
-        auto val0 = simd_cast<int_v>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
-        auto [val0_first, val0_second] = int_v_to_long_v(val0);
-
-        val0_first.store(&values[vidx]);
-        val0_second.store(&values[vidx + long_v::size()]);
-
-        auto val1 = simd_cast<int_v>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
-        auto [val1_first, val1_second] = int_v_to_long_v(val1);
-        val1_first.store(&values[vidx + 2 * long_v::size()]);
-        val1_second.store(&values[vidx + 3 *long_v::size()]);
-      }
     }
   }
   times.resize(idx);

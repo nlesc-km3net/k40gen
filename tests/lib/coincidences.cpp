@@ -9,29 +9,26 @@
 
 using namespace std;
 
-tuple<double, double, unordered_map<size_t, double>>
+tuple<double, double>
 coincidence_rate(array<float, 4> rates) {
 
    Generators gens{1052, 9523, rates};
+   auto l1_rate = std::accumulate(std::next(begin(rates)), end(rates), 0.);
+   long dt = std::lround(1e9);
 
-   long dt = std::lround(1e7);
-
-   const size_t n_expect = gens.n_expect(dt);
-   storage_t times; times.resize(n_expect);
-   storage_t values; values.resize(n_expect);
+   storage_t times; times.resize(3 * l1_rate);
+   storage_t values; values.resize(3 * l1_rate);
+   pmts_t pmts(3 * l1_rate);
 
    long time_start = 0, time_end = 0;
    double av = 0.;
-   const int n_iter = 10000;
-   unordered_map<size_t, double> count;
+   const int n_iter = 5000;
 
    for (int i = 0; i < n_iter; ++i) {
       time_end += dt;
-      auto [pmts, n_coincidence] = fill_coincidences(times, 0ul, time_start, time_end, gens);
-      count[n_coincidence] += 1 / double{n_iter};
-      av += n_coincidence / double{n_iter};
+      auto [n_times, n_coincidences] = fill_coincidences(times, pmts, 0ul, time_start, time_end, gens);
+      av += n_coincidences / double{n_iter};
       time_start = time_end;
    }
-
-   return {gens.coincidence_rate, av, count};
+   return {gens.coincidence_rate, av};
 }

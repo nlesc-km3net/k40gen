@@ -59,6 +59,8 @@ if (ROOT_FOUND)
     generate
     test_functions
     ${ROOT_LIBRARIES})
+
+  add_test(TestK40ROOT test_k40gen_root)
 endif()
 
 find_package(Python3 COMPONENTS Interpreter)

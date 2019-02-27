@@ -113,7 +113,6 @@ endif()
 
 set(generate_SOURCES
   src/generate/generate.cpp
-  src/generate/storage.cpp
   src/generate/generate_scalar.cpp)
 
 if (USE_AVX2)

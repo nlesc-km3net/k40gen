@@ -1,6 +1,7 @@
 #include <numeric>
 #include <iostream>
 #include <array>
+#include <iomanip>
 
 #include <generate.h>
 #include <storage.h>
@@ -14,12 +15,19 @@
 #include <TCanvas.h>
 #include <TROOT.h>
 
+#define CATCH_CONFIG_RUNNER
+#include "catch2/catch.hpp"
+
 using namespace std;
 
-int main() {
+int main(int argc, char* argv[]) {
 
    gROOT->SetBatch();
+   return Catch::Session().run( argc, argv );
 
+}
+
+TEST_CASE( "Rates makes sense [ROOT]", "[rates_ROOT]" ) {
    map<bool, unique_ptr<TH1I>> histos;
 
    array<float, 4> rates{7000., 0., 0., 0.};
@@ -31,15 +39,14 @@ int main() {
 
       Generators gens{1052, 9523, rates};
 
-      long dt = std::lround(1e6);
+      long dt = std::lround(1e7);
 
       long time_start = 0, time_end = time_start + dt;
 
       auto [times, values] = generate(time_start, time_end, gens, use_avx2);
-
       const size_t n_times = times.size();
       for (size_t i = 0; i < n_times - 1; ++i) {
-         if (((values[i + 1]) >> 13) == (values[i] >> 13)) {
+         if (((values[i + 1]) >> 8) == (values[i] >> 8)) {
             time_histo->Fill(times[i + 1] - times[i]);
          }
       }
@@ -47,7 +54,7 @@ int main() {
             time_histo->GetBinCenter(1 + time_histo->GetNbinsX())};
       auto fit = time_histo->Fit(&expo, "RS");
       // parameter is negative
-      cout << std::fabs(rates[0] + (fit->Parameter(1) * 1e9)) / rates[0]  << endl;
+      REQUIRE(std::fabs(rates[0] + (fit->Parameter(1) * 1e9)) / rates[0] < 1e-3);
    }
 
    TCanvas canvas{"canvas", "canvas", 600, 800};

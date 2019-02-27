@@ -37,10 +37,10 @@ generate_k40(const long time_start, const long time_end, Generators& gens, bool 
 
   // factory for lambda's to shift and mask the values back into their
   // components.
-  auto shift_mask_fact = [&values] (const size_t shift, const long mask) {
-                           return [&values, shift, mask] (const auto val) {
-                                    return (val >> shift) & mask;
-                                  };
+  auto shift_mask_fact = [] (const size_t shift, const long mask) {
+                            return [shift, mask] (const auto val) {
+                                      return (val >> shift) & mask;
+                                   };
                          };
 
   // column in the output array

@@ -8,11 +8,11 @@ using namespace std;
 
 TEST_CASE( "Coincidences make sense", "[coincidence]" ) {
    auto check_coincidence = [](array<float, 4> rates) {
-                              const auto [rate, av, counts] = coincidence_rate(rates);
+                              const auto [rate, av] = coincidence_rate(rates);
                               auto conf_rate = std::accumulate(std::next(begin(rates)), end(rates), 0.);
                               REQUIRE(rate == conf_rate);
                               if (rate != 0.) {
-                                REQUIRE(std::abs(rate - av) / rate < 1e-3);
+                                REQUIRE(std::abs(rate - av) / rate < 2e-3);
                               }
                             };
 
