@@ -132,14 +132,11 @@ std::tuple<storage_t, storage_t> generate(const long start, const long end,
                                           Generators& gens, bool use_avx2) {
 #ifdef USE_AVX2
    if (use_avx2) {
-      std::cout << "Generating AVX2\n";
       return generate_avx2(start, end, gens);
    } else {
-      std::cout << "Generating scalar\n";
       return generate_scalar(start, end, gens);
    }
 #else
-   std::cout << "Generating scalar\n";
    return generate_scalar(start, end, gens);
 #endif
 }
