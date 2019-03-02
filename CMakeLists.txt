@@ -7,6 +7,7 @@ option(ENABLE_PYTHON "Enable python bindings" TRUE)
 option(ENABLE_VC "Enable usage of VC library" TRUE)
 option(ENABLE_TESTS "Enable tests" TRUE)
 option(ENABLE_ROOT "Enable test with ROOT" TRUE)
+option(BUILD_ASSIGNMENT "Build assignment skeleton" FALSE)
 
 include(ExternalProject)
 include(FindPackageHandleStandardArgs)
@@ -162,6 +163,11 @@ if (Vc_BUILTIN)
 endif()
 add_dependencies(generate vectorclass-install)
 
+endif()
+
+if(BUILD_ASSIGNMENT)
+  add_executable(assignment assignment/skeleton.cpp)
+  target_link_libraries(assignment PUBLIC generate)
 endif()
 
 if(ENABLE_PYTHON)
