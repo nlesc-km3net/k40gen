@@ -15,6 +15,8 @@
  */
 #pragma once
 
+#include "config.h"
+
 #include <vector>
 
 #ifdef USE_AVX2

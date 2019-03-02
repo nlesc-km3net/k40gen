@@ -48,7 +48,7 @@ float cross_prob(const float ct);
 struct Generators {
 private:
   const std::array<int, 2> m_seeds;
-  const std::array<float, 4> m_rates{7000., 700, 70., 7.};
+  const std::array<float, 4> m_rates;
   std::seed_seq m_seed_seq;
 
 public:

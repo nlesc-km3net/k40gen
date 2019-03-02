@@ -26,10 +26,6 @@ endif()
 
 include_directories(include)
 
-if (USE_AVX2)
-  add_definitions("-DUSE_AVX2=1")
-endif()
-
 add_library(test_functions STATIC
   lib/coincidences.cpp
   lib/generate.cpp)

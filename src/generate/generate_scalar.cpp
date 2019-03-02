@@ -80,8 +80,8 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
   const size_t n_expect = gens.n_expect(time_end - time_start, true);
   const float tau_l0 = gens.tau_l0();
 
-  storage_t times; times.resize(n_expect);
-  storage_t values; values.resize(n_expect + 1);
+  storage_t times(n_expect);
+  storage_t values(n_expect + 1);
   const size_t n_expect_pmts = gens.n_expect(time_end - time_start, false);
   pmts_t pmts(n_expect_pmts, 0);
   size_t idx = 0;
@@ -111,6 +111,9 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
                          });
       idx += n_times;
     }
+  }
+  if (idx >= times.size() - 2) {
+   std::cerr << "Warning: allocated space exceeded, event is truncated." << std::endl;
   }
   times.resize(idx);
   values.resize(idx);

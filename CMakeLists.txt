@@ -103,17 +103,18 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lpthread")
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${INCLUDES} -W -O3 -DNDEBUG")
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} " )
+SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
 
 include(VcMacros)
 vc_set_preferred_compiler_flags()
 
 if (USE_AVX2)
   include_directories(${Vc_INCLUDE_DIR})
-  add_definitions("-DUSE_AVX2")
   string(REPLACE ";" " " VC_FLAGS "${Vc_COMPILE_FLAGS}")
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${VC_FLAGS} -mavx2 -mfma -mbmi2")
 endif()
+
+configure_file(lib/generate/config.h.in lib/generate/config.h)
 
 set(generate_SOURCES
   src/generate/generate.cpp
@@ -127,6 +128,7 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR}/lib)
 include_directories(${CMAKE_SOURCE_DIR}/lib/generate)
+include_directories(${CMAKE_BINARY_DIR}/lib/generate)
 
 add_library(generate SHARED ${generate_SOURCES})
 
