@@ -172,6 +172,9 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
 
     }
   }
+  if (idx >= times.size() - 2 * long_v::size()) {
+     std::cerr << "Warning: allocated space exceeded, event is truncated." << std::endl;
+  }
   times.resize(idx);
   values.resize(idx);
   return {std::move(times), std::move(values)};
