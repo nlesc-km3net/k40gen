@@ -29,21 +29,30 @@ using std::map;
 using std::vector;
 
 }
+array<array<float, 3>, 3> pmt_rotation(float, float)
+{
+  return {{{1.f, 0.f, 0.f},
+           {0.f, 1.f, 0.f},
+           {0.f, 0.f, 1.f}}};
+}
 
 array<float, 3> rotate(const array<array<float, 3>, 3>& rotation,
-                       const array<float, 3>& pmt) {
+                       const array<float, 3>& pmt)
+{
   return pmt;
 }
 
 
 int main() {
 
+  // Part 1: parse km3net_reference.detx into storage
+
   // Example storage of PMT postions
   map<int, array<float, 3>> PMTs;
 
-  // Part 1: parse km3net_reference.detx into storage
-
   // Generate random hits
+  // The rates are Hz per number of hits on neighbouring PMTs; this
+  // needn't be changed.
   const array<float, 4> background_rates{7000.f, 700.f, 70.f, 7.f};
   Generators generators{41431, 2340, background_rates};
 
@@ -81,17 +90,15 @@ int main() {
       vector<array<float, 3>> result(hit_end - hit_start);
 
       float d_tp = 5.f * 2.f * PI / (360.f * 360.f);
-      for (float theta = 0.f; theta < 2.f * PI; theta += d_tp) {
-        for (float phi = 0.f; phi < PI; phi += d_tp) {
+      for (float theta = 0.f; theta < PI; theta += d_tp) {
+        for (float phi = 0.f; phi < 2 * PI; phi += d_tp) {
           for (size_t i = hit_start; i < hit_end; ++i) {
 
             // Obtain PMT ID
             size_t pmt_id = 0;
 
             // Calculate rotation
-            array<array<float, 3>, 3> rotation = {{{1.f, 0.f, 0.f},
-                                                   {0.f, 1.f, 0.f},
-                                                   {0.f, 0.f, 1.f}}};
+            auto rotation = pmt_rotation(theta, phi);
             // Apply rotation
             result[i] = rotate(rotation, PMTs[pmt_id]);
           }
