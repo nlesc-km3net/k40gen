@@ -21,7 +21,7 @@ and energy it aims to reconstruct.
 There are also several other sources of light present in the water,
 which create so-called background noise. A standalone generator that
 simulates such noise is available at
-[https://github.com/nlesc-km3net/k40gen](https://github.com/nlesc-km3net/k40gen). The
+[https://github.com/nlesc-km3net/k40gen](k40gen_repo). The
 k40gen package also houses this challenge.
 
 ### Challenge
@@ -87,7 +87,7 @@ direction of the PMTs selected in part 2.
 To test whether the code works, it is suggested to also implement the
 inverse of the functions that are used to obtain and apply the
 rotations: obtaining and applying the inverse of a rotation,
-$R_{-1}$, after $R$ has been applied should return a PMT to it's
+$R^{-1}$, after $R$ has been applied should return a PMT to it's
 original position.
 
 ### Bonus
@@ -98,11 +98,14 @@ use with a vectorized implementation is also welcome.
 
 ### Notes and Dependencies
 
-The k40gen package is implemented in C++17 and uses CMake as its build
-system. Python bindings for the `generate(...)` function are also available,
-but are probably less relevant to this challenge. They can be disabled
-at build time by passing `-DENABLE_PYTHON=FALSE` to cmake when
-configuring.
+The k40gen package is implemented in C++17 and uses a combination of
+CMake for the C++ part, and distutils for the Python part as its build
+system.
+
+Since the python bindings are not very relevant for this challenge, it
+is suggested to use a direct CMake build instead of using the included
+`setup.py` to build the [k40gen](k40gen_repo). The Python bindings can
+be disabled by passing `-DENABLE_PYTHON=FALSE` to cmake when configuring.
 
 #### C++17
 The package requires a C++17-compliant compiler and standard library
@@ -139,3 +142,4 @@ Please address questions by mail to the mentors:
 Best of luck!
 
 [km3net_muon]: KM3NeT-NeutrinoToMuon.png
+[k40gen_repo]: https://github.com/nlesc-km3net/k40gen
