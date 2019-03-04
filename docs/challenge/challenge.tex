@@ -152,7 +152,7 @@ use with a vectorized implementation is also welcome.
 \section{Notes and Dependencies}
 
 The k40gen package is implemented in C++17 and uses CMake as its build
-system. Python bindings for the generate function are also available,
+system. Python bindings for the |generate(...)| function are also available,
 but are probably less relevant to this challenge. They can be disabled
 at build time by passing \verb|-DENABLE_PYTHON=FALSE| to cmake when
 configuring.
@@ -162,7 +162,7 @@ The package requires a C++17-compliant compiler and standard library
 to build it.
 
 \subsection{Range V3}
-The skeleton challenge uses the RangeV3 library —
+The skeleton provided for this challenge uses the RangeV3 library —
 \href{https://github.com/ericniebler/range-v3}{https://github.com/ericniebler/range-v3}
 — to sort the generated |PMT_IDs| according to their timestamp. It is
 assumed to be installed on the build system. If not, it can be
@@ -173,7 +173,7 @@ properly include it.
 The Vc library —
 \href{https://github.com/VcDevel/Vc}{https://github.com/VcDevel/Vc} —
 is used to implement an AVX2 version of the generator, and is
-therefore built if not available on the system.
+downloaded and built by CMake if not available on the system.
 
 \section{Submitting}
 
