@@ -27,17 +27,17 @@ k40gen package also houses this challenge.
 ### Challenge
 
 The C++17 code for this challenge is available on the GSoC\_2019
-branch of the k40gen repository. It consists of a skeleton file
+branch of the k40gen repository. It consists of a [skeleton][] file
 containing `main` that needs to be completed. The file can be found in
-the ``challenge'' subdirectory. Please stick to C++17 (or an earlier
-standard) to implement this challenge.
+the "challenge" subdirectory at the top of this repository. Please
+stick to C++17 (or an earlier standard) to implement this challenge.
 
 #### Part 1
 
-The file `km3net_reference.detx` in the ``challenge'' subdirectory of
-the repository contains a reference geometry of the detector. Part 1
-of the challenge aims to parse this file into some form of storage for
-usage later in the program.
+The [km3net_reference.detx](../../challenge/km3net_reference.detx]
+file contains a reference geometry of the detector. Part 1 of the
+challenge aims to parse this file into some form of storage for usage
+later in the program.
 
 The first three lines of `km3net_reference.detx` can be ignored. The
 fourth line contains the number of strings in the detector. The rest
@@ -112,7 +112,7 @@ The package requires a C++17-compliant compiler and standard library
 to build it.
 
 #### Range V3
-The skeleton provided for this challenge uses the RangeV3 library —
+The [skeleton][] provided for this challenge uses the RangeV3 library —
 [https://github.com/ericniebler/range-v3](https://github.com/ericniebler/range-v3)
 — to sort the generated `PMT_IDs` according to their timestamp. It is
 assumed to be installed on the build system. If not, it can be
@@ -143,3 +143,4 @@ Best of luck!
 
 [km3net_muon]: KM3NeT-NeutrinoToMuon.png
 [k40gen_repo]: https://github.com/nlesc-km3net/k40gen
+[skeleton]: ../../challenge/skeleton.cpp
