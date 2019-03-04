@@ -163,8 +163,8 @@ add_dependencies(generate vectorclass-install)
 endif()
 
 if(BUILD_ASSIGNMENT)
-  add_executable(assignment assignment/skeleton.cpp)
-  target_link_libraries(assignment PUBLIC generate)
+  add_executable(challenge challenge/skeleton.cpp)
+  target_link_libraries(challenge PUBLIC generate)
 endif()
 
 if(ENABLE_PYTHON)
