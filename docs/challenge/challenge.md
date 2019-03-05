@@ -104,7 +104,7 @@ system.
 
 Since the python bindings are not very relevant for this challenge, it
 is suggested to use a direct CMake build instead of using the included
-`setup.py` to build the [k40gen](k40gen_repo). The Python bindings can
+`setup.py` to build the [k40gen][k40gen_repo]. The Python bindings can
 be disabled by passing `-DENABLE_PYTHON=FALSE` to cmake when configuring.
 
 #### C++17
