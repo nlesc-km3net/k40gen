@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-project(k40gen CXX)
+project(k40gen C CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # for find_package
 
@@ -13,12 +13,12 @@ include(FindPackageHandleStandardArgs)
 set(EXTERNAL_DIR "external")
 
 if (ENABLE_VC)
-find_package(Vc)
+find_package(Vc QUIET)
 
 if (NOT Vc_FOUND OR "${Vc_VERSION}" VERSION_LESS "1.3.2")
 
 message(STATUS "Using builtin Vc")
-
+set(Vc_BUILTIN TRUE)
 set(Vc_VERSION "1.4.1")
 set(Vc_PROJECT "Vc-${Vc_VERSION}")
 set(Vc_SRC_URI "https://github.com/VcDevel/Vc/archive/${Vc_VERSION}.tar.gz")
@@ -41,6 +41,7 @@ ExternalProject_Add(VC
              -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
              -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
              -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+	     STEP_TARGETS install
 )
 
 set(VC_TARGET Vc)
@@ -53,8 +54,11 @@ find_package_handle_standard_args(Vc
   REQUIRED_VARS Vc_INCLUDE_DIR Vc_LIBRARIES Vc_CMAKE_MODULES_DIR
   VERSION_VAR Vc_VERSION)
 
+else()
+  set(Vc_BUILTIN FALSE)
 endif()
 else()
+  set(Vc_BUILTIN FALSE)
   set(USE_AVX2 FALSE)
 endif()
 
@@ -132,6 +136,12 @@ target_include_directories(generate
     PUBLIC ${CMAKE_BINARY_DIR}/include/vectorclass)
 add_dependencies(generate vectorclass-install)
 target_compile_definitions(generate PUBLIC "-DVc_IMPL=AVX2")
+if (Vc_BUILTIN)
+  add_dependencies(generate VC-install)
+  target_link_directories(generate PUBLIC ${Vc_DESTDIR}/lib)
+endif()
+add_dependencies(generate vectorclass-install)
+
 endif()
 
 if(ENABLE_PYTHON)
