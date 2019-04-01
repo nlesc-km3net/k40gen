@@ -168,6 +168,11 @@ if(ENABLE_PYTHON)
     target_compile_definitions(k40gen PRIVATE "-DXTENSOR_ENABLE_XSIMD")
   endif()
 
+  # xtensor headers
+  find_package(xtensor REQUIRED)
+  target_include_directories(k40gen PUBLIC ${xtensor_INCLUDE_DIRS})
+  target_link_libraries(k40gen PUBLIC xtensor)
+
   # pybind11 headers
   find_package(pybind11 REQUIRED)
   target_include_directories(k40gen PRIVATE ${pybind11_INCLUDE_DIRS})
