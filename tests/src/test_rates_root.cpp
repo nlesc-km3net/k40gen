@@ -43,7 +43,7 @@ TEST_CASE( "Rates makes sense [ROOT]", "[rates_ROOT]" ) {
 
       long time_start = 0, time_end = time_start + dt;
 
-      auto [times, values] = generate(time_start, time_end, gens, use_avx2);
+      auto [times, values] = generate(time_start, time_end, gens, "reference", use_avx2);
       const size_t n_times = times.size();
       for (size_t i = 0; i < n_times - 1; ++i) {
          if (((values[i + 1]) >> 8) == (values[i] >> 8)) {

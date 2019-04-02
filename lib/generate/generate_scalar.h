@@ -58,4 +58,4 @@ float dot_product(const std::array<float, 3>& left, const std::array<float, 3>& 
 }
 
 std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const long time_end,
-                                                 Generators& gens);
+                                                 Generators& gens, dom_fun_t dom_fun);

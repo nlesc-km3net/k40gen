@@ -24,9 +24,10 @@ namespace {
 }
 
 inline xt::pyarray<long>
-generate_k40(const long time_start, const long time_end, Generators& gens, bool avx2)
+generate_k40(const long time_start, const long time_end, Generators& gens,
+             std::string scheme, bool avx2)
 {
-  auto r = generate(time_start, time_end, gens, avx2);
+  auto r = generate(time_start, time_end, gens, scheme, avx2);
   auto times = std::get<0>(r);
   auto values = std::get<1>(r);
   auto n = times.size();

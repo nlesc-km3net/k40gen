@@ -151,11 +151,11 @@ endif()
 if(ENABLE_PYTHON)
   include(XTensor)
 
+  # pybind11
+  find_package(pybind11 REQUIRED)
   include(pybind11Tools)
   pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
   target_link_libraries(k40gen PUBLIC generate)
-
-  find_package(pybind11)
   target_include_directories(k40gen PUBLIC ${PYBIND11_INCLUDE_DIRS})
 
   if (xtp_BUILTIN)
@@ -167,10 +167,6 @@ if(ENABLE_PYTHON)
   if (USE_AVX2)
     target_compile_definitions(k40gen PRIVATE "-DXTENSOR_ENABLE_XSIMD")
   endif()
-
-  # pybind11 headers
-  find_package(pybind11 REQUIRED)
-  target_include_directories(k40gen PRIVATE ${pybind11_INCLUDE_DIRS})
 
   # numpy headers
   find_package(NumPy REQUIRED)

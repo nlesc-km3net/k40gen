@@ -60,9 +60,8 @@ if (ROOT_FOUND)
   add_test(TestK40ROOT test_k40gen_root)
 endif()
 
-find_package(Python3 COMPONENTS Interpreter)
-if(Python3_Interpreter_FOUND)
+if(ENABLE_PYTHON)
   add_test(NAME pytest
-	COMMAND Python3::Interpreter -m pytest -rsv ${PROJECT_SOURCE_DIR}/tests/python/test_extension.py
+	COMMAND ${PYTHON_EXECUTABLE} -m pytest -rsv ${PROJECT_SOURCE_DIR}/tests/python/test_extension.py
 	WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 endif()

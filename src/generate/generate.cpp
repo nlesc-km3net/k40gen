@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <vector>
 #include <tuple>
+#include <sstream>
 
 #include <generate.h>
 #include <storage.h>
@@ -30,6 +31,14 @@ namespace {
   using std::pair;
   using std::vector;
   using std::array;
+}
+
+unsigned int ref_dom(int dom, int mod) {
+  return 100 * (dom + 1) + mod + 1;
+}
+
+unsigned int orca_dom(int dom, int mod) {
+  return 18 * dom + mod + 1;
 }
 
 Generators::Generators(const int seed0, const int seed1, const std::array<float, 4> rates)
@@ -128,15 +137,27 @@ fill_coincidences(storage_t& times, pmts_t& pmts, size_t idx,
   return {pmts.size(), n};
 }
 
-std::tuple<storage_t, storage_t> generate(const long start, const long end,
-                                          Generators& gens, bool use_avx2) {
+std::tuple<storage_t, storage_t> generate(const long start, const long stop,
+                                          Generators& gens, std::string dom_fun,
+                                          bool use_avx2) {
+  auto it = Constants::dom_funs.find(dom_fun);
+  std::stringstream funs;
+  std::for_each(begin(Constants::dom_funs), end(Constants::dom_funs),
+                [&funs] (const auto& entry) {
+                  funs << " " << entry.first;
+                });
+  if (it == end(Constants::dom_funs)) {
+    throw std::runtime_error{std::string{"wrong dom mapping function, should be one of: "} +
+                             funs.str()};
+  }
+
 #ifdef USE_AVX2
    if (use_avx2) {
-      return generate_avx2(start, end, gens);
+     return generate_avx2(start, stop, gens, it->second);
    } else {
-      return generate_scalar(start, end, gens);
+     return generate_scalar(start, stop, gens, it->second);
    }
 #else
-   return generate_scalar(start, end, gens);
+   return generate_scalar(start, stop, gens, it->second);
 #endif
 }

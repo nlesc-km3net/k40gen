@@ -13,7 +13,7 @@ pair<double, double> generate_l0(float l0_rate, long dt, bool use_avx2) {
    long time_start = 0, time_end = 0;
    time_end += dt;
 
-   auto [times, values] = generate(time_start, time_end, gens, use_avx2);
+   auto [times, values] = generate(time_start, time_end, gens, "reference", use_avx2);
 
    double av = 0.;
    const size_t n_times = times.size();

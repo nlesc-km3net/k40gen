@@ -60,4 +60,4 @@ float dot_product(const Vc::SimdArray<float, 3>& left, const Vc::SimdArray<float
 }
 
 std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long time_end,
-                                               Generators& gens);
+                                               Generators& gens, dom_fun_t dom_fun);

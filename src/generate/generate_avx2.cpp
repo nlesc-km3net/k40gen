@@ -66,8 +66,7 @@ auto int_v_to_long_v(const int_v& in) -> pair<long_v, long_v>
 };
 
 void fill_values_avx2(long idx_start, long idx_end, storage_t& values, Ranvec1& random,
-                      int dom, int mod,
-                      std::function<int_v(size_t)> pmt_fun) {
+                      int dom_id, std::function<int_v(size_t)> pmt_fun) {
    // fill values
    size_t n = 0;
    const long value_end = idx_end + (2 * long_v::size() - (idx_end % 2 * long_v::size()));
@@ -85,13 +84,13 @@ void fill_values_avx2(long idx_start, long idx_end, storage_t& values, Ranvec1& 
       z0 = fact * tot_sigma * z0 + tot_mean;
       z1 = fact * tot_sigma * z1 + tot_mean;
 
-      auto val0 = simd_cast<int_v>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+      auto val0 = simd_cast<int_v>(z0) | (pmt1 << 8) | dom_id << 13;
       auto [val0_first, val0_second] = int_v_to_long_v(val0);
 
       val0_first.store(&values[vidx]);
       val0_second.store(&values[vidx + long_v::size()]);
 
-      auto val1 = simd_cast<int_v>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+      auto val1 = simd_cast<int_v>(z1) | (pmt2 << 8) | dom_id << 13;
       auto [val1_first, val1_second] = int_v_to_long_v(val1);
       val1_first.store(&values[vidx + 2 * long_v::size()]);
       val1_second.store(&values[vidx + 3 *long_v::size()]);
@@ -99,7 +98,7 @@ void fill_values_avx2(long idx_start, long idx_end, storage_t& values, Ranvec1& 
 }
 
 std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long time_end,
-                                               Generators& gens) {
+                                               Generators& gens, dom_fun_t dom_fun) {
 
   Ranvec1 random{Constants::random_method};
   random.init(gens.seeds()[0], gens.seeds()[1]);
@@ -121,6 +120,7 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
   // First generate some data
   for (int dom = 0; dom < Constants::n_dom; ++dom) {
     for (int mod = 0; mod < Constants::n_mod; ++mod) {
+      auto dom_id = dom_fun(dom, mod);
       for (int pmt = 0; pmt < Constants::n_pmt; ++pmt) {
         size_t pmt_start = idx;
         long_v offset;
@@ -157,14 +157,14 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
           idx += 2 * long_v::size();
         }
 
-        fill_values_avx2(pmt_start, idx, values, random, dom, mod,
+        fill_values_avx2(pmt_start, idx, values, random, dom_id,
                          [pmt](size_t) { return int_v(pmt); });
 
       }
 
       // Coincidences
       auto [n_times, _] = fill_coincidences(times, pmts, idx, time_start, time_end, gens);
-      fill_values_avx2(idx, idx + n_times, values, random, dom, mod,
+      fill_values_avx2(idx, idx + n_times, values, random, dom_id,
                        [&pmts](size_t n) {
                           return int_v(pmts.data() + n * int_v::size());
                        });

@@ -42,7 +42,8 @@ float GenScalar::dot_product(const std::array<float, 3>& left, const std::array<
   return r;
 }
 
-void fill_values_scalar(long idx_start, long idx_end, storage_t& values, Generators& gens, int dom, int mod,
+void fill_values_scalar(long idx_start, long idx_end, storage_t& values, Generators& gens,
+                        unsigned int dom_id,
                         std::function<unsigned int(size_t)> pmt_fun) {
    // fill values
   auto& mt = gens.mt;
@@ -63,16 +64,17 @@ void fill_values_scalar(long idx_start, long idx_end, storage_t& values, Generat
     z0 = fact * tot_sigma * z0 + tot_mean;
     z1 = fact * tot_sigma * z1 + tot_mean;
 
-    auto val0 = static_cast<int>(z0) | (pmt1 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+    auto val0 = static_cast<int>(z0) | (pmt1 << 8) | dom_id << 13;
     values[vidx] = val0;
 
-    auto val1 = static_cast<int>(z1) | (pmt2 << 8) | ((100 * (dom + 1) + mod + 1) << 13);
+    auto val1 = static_cast<int>(z1) | (pmt2 << 8) | dom_id << 13;
     values[vidx + 1] = val1;
   }
 }
 
 std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const long time_end,
-                                                 Generators& gens) {
+                                                 Generators& gens,
+                                                 dom_fun_t dom_fun) {
 
   auto& mt = gens.mt;
   auto& flat = gens.flat;
@@ -89,6 +91,7 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
   // First generate some data
   for (int dom = 0; dom < Constants::n_dom; ++dom) {
     for (int mod = 0; mod < Constants::n_mod; ++mod) {
+      auto dom_id = dom_fun(dom, mod);
       for (int pmt = 0; pmt < Constants::n_pmt; ++pmt) {
         size_t pmt_start = idx;
         long last = time_start;
@@ -98,13 +101,13 @@ std::tuple<storage_t, storage_t> generate_scalar(const long time_start, const lo
           last += static_cast<long>(r + 0.5);
           times[idx++] = last;
         }
-        fill_values_scalar(pmt_start, idx, values, gens, dom, mod,
+        fill_values_scalar(pmt_start, idx, values, gens, dom_id,
                            [pmt](size_t) { return pmt; });
       }
 
       // Coincidences
       auto [n_times, _] = fill_coincidences(times, pmts, idx, time_start, time_end, gens);
-      fill_values_scalar(idx, idx + n_times, values, gens, dom, mod,
+      fill_values_scalar(idx, idx + n_times, values, gens, dom_id,
                          [&pmts](size_t n) {
                            assert(n < pmts.size());
                            return pmts[n];

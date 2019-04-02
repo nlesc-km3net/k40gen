@@ -15,11 +15,19 @@
  */
 #pragma once
 
+#include <map>
 #include <vector>
 #include <numeric>
+#include <functional>
 #include <array>
 #include <random>
 #include "storage.h"
+
+unsigned int ref_dom(int dom, int mod);
+
+unsigned int orca_dom(int dom, int mod);
+
+using dom_fun_t = std::function<unsigned int(int, int)>;
 
 namespace Constants {
 
@@ -41,6 +49,10 @@ namespace Constants {
   const float tot_sigma = 2.44078f;
 
   const int random_method = 2;
+
+  static const std::map<std::string, std::function<unsigned int(int, int)>> dom_funs
+  {{"reference", ref_dom},
+   {"orca", orca_dom}};
 }
 
 float cross_prob(const float ct);
@@ -121,4 +133,5 @@ fill_coincidences(storage_t& times, pmts_t& pmts, size_t idx,
                   Generators& gens);
 
 std::tuple<storage_t, storage_t> generate(const long start, const long end,
-                                          Generators& gens, bool use_avx2);
+                                          Generators& gens, std::string scheme,
+                                          bool use_avx2);
