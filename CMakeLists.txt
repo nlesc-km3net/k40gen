@@ -168,6 +168,9 @@ if(ENABLE_PYTHON)
     target_compile_definitions(k40gen PRIVATE "-DXTENSOR_ENABLE_XSIMD")
   endif()
 
+  # xtensor headers
+  target_include_directories(k40gen PUBLIC ${xtensor_INCLUDE_DIRS})
+
   # numpy headers
   find_package(NumPy REQUIRED)
   target_include_directories(k40gen PRIVATE ${NUMPY_INCLUDE_DIRS})
