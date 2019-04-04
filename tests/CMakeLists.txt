@@ -57,6 +57,10 @@ if (ROOT_FOUND)
     test_functions
     ${ROOT_LIBRARIES})
 
+  if(builtin_Catch2)
+    add_dependencies(test_k40gen_root catch-install)
+  endif()
+
   add_test(TestK40ROOT test_k40gen_root)
 endif()
 
