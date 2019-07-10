@@ -170,7 +170,7 @@ endif()
 if(ENABLE_PYTHON)
   include(XTensor)
 
-  # pybind11
+  # Pybind11
   find_package(pybind11 REQUIRED)
   include(pybind11Tools)
   pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
