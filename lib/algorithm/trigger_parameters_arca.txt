@@ -1,0 +1,29 @@
+
+# Muon trigger
+
+trigger3DMuon.enabled        =  1;
+trigger3DMuon.numberOfHits   =  5;
+trigger3DMuon.gridAngle_deg  =  1;
+
+# Shower trigger
+
+trigger3DShower.enabled      =  1;
+trigger3DShower.numberOfHits =  5;
+
+# L1 maximal cos(angle between PMT axes)
+ctMin           =  0.0;
+# L1 maximal time difference
+TMaxLocal_ns    = 15.0;
+
+# Summary data writing
+writeSummary    = 100;
+
+# L1 data writing
+writeL1         = 100;
+
+# Supernova trigger
+writeSN         = 1;
+
+SN.numberOfHits =  4;
+SN.TMaxLocal_ns = 10.0;
+SN.ctMin        =  0.0;
