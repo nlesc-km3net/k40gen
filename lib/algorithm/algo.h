@@ -24,7 +24,6 @@ struct Parameters
     int numberOfHits;
     int numberOfModules;
     double TMaxEvent_ns;
-    // JRotator3D rotator;
     Match1D match1D;
     Match3D match3D;
     int factoryLimit;
@@ -45,8 +44,8 @@ class Trigger3N
 	        parameters.factoryLimit = 1;
 
         // buffer.resize(parameters.factoryLimit);
-        get<0>(buffer).resize(parameters.factoryLimit);
-        get<1>(buffer).resize(parameters.factoryLimit);
+        buffer_time.resize(parameters.factoryLimit);
+        buffer_id.resize(parameters.factoryLimit);
     }
 
     long getNumModules(int p, int q); //Returns number of unique mod_id's between hit p and hit q
@@ -98,7 +97,7 @@ class Trigger3N
                                 if(abs(itq-root) >= parameters.numberOfHits && 
                                    getNumModules(min(root,itq),max(itq,root),buffer_id) >= parameters.numberOfModules)
                                 {
-                                    itq = clusterize(itp, itq, match3D, parameters.numberOfHits - 1);
+                                    itq = clusterize(itp, itq, match3D, parameters.numberOfHits-1, buffer_time, buffer_id);
 
                                     if(abs(root-itq) >= parameters.numberOfHits &&
                                        getNumModules(min(root,itq),max(itq,root),buffer_id) >= parameters.numberOfModules)
