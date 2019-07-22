@@ -1,11 +1,12 @@
-#include "constants.h"
+#ifndef MATCH1D_H
+#define MATCH1D_H
+
 #include<math.h>
+#include "constants.h"
 #include "pmt_storage.h"
 
-static const double C_inv = getInverseSpeedOfLight();
-static const double Ind_Refraction = getIndexOfRefraction();
-static const double Tan_c = getTanThetaC();
-PMT pmt;
+const double C_inv = getInverseSpeedOfLight();
+const double Tan_c = getTanThetaC();
 
 class Match1D
 {
@@ -14,22 +15,15 @@ class Match1D
         double TMax_ns;
         double TMaxExtra_ns;
 
-        Match1D(const double roadWidth_m, const double Tmax_ns = 0.0)
+        Match1D(const double roadWidth_m = 0.0, const double Tmax_ns = 0.0)
         {
             RMax_m = roadWidth_m;
             TMaxExtra_ns = Tmax_ns;
             TMax_ns = 0.5 * RMax_m * Tan_c * C_inv + TMaxExtra_ns;
         }
-        /*
-            Arguments:
-                time of first hit
-                pmt_id of first hit
-                time of second hit
-                pmt_id of second hit
 
-        */
         bool operator()(const long f_time, const long s_time, 
-                        const long f_id, const long s_id) 
+                        const long f_id, const long s_id, const PMT &pmt) 
         {
             double x = pmt.x[f_id] - pmt.x[s_id];
             double y = pmt.y[f_id] - pmt.y[s_id];
@@ -49,4 +43,4 @@ class Match1D
         }
 };
 
-
+#endif

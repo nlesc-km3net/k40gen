@@ -1,3 +1,6 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
 #include <math.h>
 
 static const double PI                        = 3.1415927;            //!< pi
@@ -137,5 +140,7 @@ inline double getKappaC()
 {
     return KAPPA_WATER;
 }
+
+#endif
 
 

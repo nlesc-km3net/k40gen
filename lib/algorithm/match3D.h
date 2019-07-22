@@ -1,10 +1,12 @@
-#include "constants.h"
+#ifndef MATCH3D_H
+#define MATCH3D_H
+
 #include<math.h>
 #include "pmt_storage.h"
+#include "constants.h"
 
-static const double C_inv = getInverseSpeedOfLight();
-static const double Ind_Refraction = getIndexOfRefraction();
-PMT pmt;
+const double c_inv = getInverseSpeedOfLight();
+const double ind_refraction = getIndexOfRefraction();
 
 class Match3D
 {
@@ -15,16 +17,9 @@ class Match3D
         {
             TMaxExtra_ns = Tmax_ns;
         }
-        /*
-            Arguments:
-                time of first hit
-                pmt_id of first hit
-                time of second hit
-                pmt_id of second hit
 
-        */
         bool operator()(const long f_time, const long s_time, 
-                        const long f_id, const long s_id) 
+                     const long f_id, const long s_id, const PMT &pmt) 
         {
             double x = pmt.x[f_id] - pmt.x[s_id];
             double y = pmt.y[f_id] - pmt.y[s_id];
@@ -32,8 +27,8 @@ class Match3D
             double d = sqrt(x*x + y*y + z*z);
             double t = fabs(f_time-s_time);
 
-            return t <= d * Ind_Refraction * C_inv + TMaxExtra_ns;
+            return t <= d * ind_refraction * c_inv + TMaxExtra_ns;
         }
 };
 
-
+#endif

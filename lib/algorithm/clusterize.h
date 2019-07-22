@@ -1,9 +1,23 @@
 #include<vector>
-#include "storage.h"
+#include<math.h>
+#include "pmt_storage.h"
 using namespace std;
+typedef vector<long> storage_t;
 
-template<class Match>
-inline int clusterize(int start, int end, Match match, int Nmin, storage_t &buffer_time, storage_t &buffer_id)
+long pmtID(int id)
+{
+   int res = 0;
+   for(int i=8; i<=12; i++) 
+   {
+        if((1<<i)&id)
+            res |= (1<<(i-8));
+   }
+   return res;
+}
+
+
+template<typename Match>
+inline int clusterize(int start, int end, Match match, int Nmin, storage_t &buffer_time, storage_t &buffer_id, PMT &pmt)
 {
     int N = abs(end-start+1);
 
@@ -17,7 +31,7 @@ inline int clusterize(int start, int end, Match match, int Nmin, storage_t &buff
             for(j=i+1; j!=N; j++)
             {
                 if(match(buffer_time[start+i], buffer_time[start+j],
-                   pmtID(buffer_id[start+i]), pmtID(buffer_id[start+j]))
+                   pmtID(buffer_id[start+i]), pmtID(buffer_id[start+j]),pmt))
                 {
                     ++count[i];
                     ++count[j];
@@ -58,7 +72,7 @@ inline int clusterize(int start, int end, Match match, int Nmin, storage_t &buff
             for(i=0; i!=n; ++i)
             {
                 if(match(buffer_time[start+i], buffer_time[start+n],
-                   pmtID(buffer_id[start+i]), pmtID(buffer_id[start+n]))
+                   pmtID(buffer_id[start+i]), pmtID(buffer_id[start+n]), pmt))
                     --count[i];
             }
         }
@@ -68,3 +82,4 @@ inline int clusterize(int start, int end, Match match, int Nmin, storage_t &buff
     }
     return start;
 }
+
