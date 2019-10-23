@@ -151,7 +151,7 @@ add_library(generate SHARED ${generate_SOURCES})
 if (USE_AVX2)
 target_link_libraries(generate PUBLIC ${Vc_LIBRARIES})
 target_include_directories(generate
-    PUBLIC ${CMAKE_BINARY_DIR}/include/vectorclass)
+    SYSTEM PUBLIC ${CMAKE_BINARY_DIR}/include/vectorclass)
 add_dependencies(generate vectorclass_addon-install)
 target_compile_definitions(generate PUBLIC "-DVc_IMPL=AVX2")
 if (Vc_BUILTIN)
