@@ -34,7 +34,7 @@ stick to C++17 (or an earlier standard) to implement this challenge.
 
 #### Part 1
 
-The [km3net_reference.detx](../../challenge/km3net_reference.detx]
+The [km3net_reference.detx](../../challenge/km3net_reference.detx)
 file contains a reference geometry of the detector. Part 1 of the
 challenge aims to parse this file into some form of storage for usage
 later in the program.
@@ -70,16 +70,16 @@ rotation for later reference. This part has two sub-parts: A and B.
 ##### Part 3A
 
 Please write down the math you propose to implement to rotate the PMTs
-over two angles: $\theta$ and $\phi$, where $\theta$ is the polar
+over two angles: &theta and &phi, where &theta is the polar
 angle of a system of spherical coordinates with its zenith direction
-along the z-axis, and $\phi$ is the azimuthal angle in the same
+along the z-axis, and &phi is the azimuthal angle in the same
 system.
 
 ##### Part 3B
 
 It is suggested to implement two functions that do the work of the
 rotation, first to obtain the parameters of the rotation from the
-angles $\theta$ and $\phi$, and another to apply the rotation to the
+angles &theta and &phi, and another to apply the rotation to the
 direction of the PMTs selected in part 2.
 
 ### Testing
