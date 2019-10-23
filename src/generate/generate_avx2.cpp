@@ -18,9 +18,8 @@
 #include <functional>
 
 #include <Vc/Vc>
-#include <instrset.h>
-#include <vectori256.h>
-#include <ranvec1.h>
+#include <vectorclass.h>
+#include <random/ranvec1.h>
 
 #include <storage.h>
 #include <generate_common.h>
@@ -45,17 +44,17 @@ float GenAVX2::dot_product(const Vc::SimdArray<float, 3>& left, const Vc::SimdAr
 
 inline int_v scan_AVX(int_v x) {
   // first shift then add
-  auto t0 = permute8i<3, 0, 1, 2, 7, 4, 5, 6>(x.data());
-  auto t1 = permute8i<-1, -1, -1, -1, 0, 1, 2, 3>(t0);
+  auto t0 = permute8<3, 0, 1, 2, 7, 4, 5, 6>(Vec8i{x.data()});
+  auto t1 = permute8<-1, -1, -1, -1, 0, 1, 2, 3>(t0);
   x += _mm256_blend_epi32(t0, t1, 0x11);
 
   // second shift then add
-  t0 = permute8i<2, 3, 0, 1, 6, 7, 4, 5>(x.data());
-  t1 = permute8i<-1, -1, -1, -1, 0, 1, 2, 3>(t0);
+  t0 = permute8<2, 3, 0, 1, 6, 7, 4, 5>(Vec8i{x.data()});
+  t1 = permute8<-1, -1, -1, -1, 0, 1, 2, 3>(t0);
   x += _mm256_blend_epi32(t0, t1, 0x33);
 
   // final shift and add
-  x += int_v{permute8i<-1, -1, -1, -1, 0, 1, 2, 3>(x.data())};
+  x += int_v{permute8<-1, -1, -1, -1, 0, 1, 2, 3>(Vec8i{x.data()})};
   return x;
 }
 
@@ -148,7 +147,7 @@ std::tuple<storage_t, storage_t> generate_avx2(const long time_start, const long
           last = second[long_v::size() - 1];
 
           //broadcast last element
-          offset.data() = permute4q<3, 3, 3, 3>(second.data());
+          offset.data() = permute4<3, 3, 3, 3>(Vec4q{second.data()});
 
           // Generate ToT as a gauss and pmt flat.
           // Only do it every other pass to make use of the double

@@ -63,22 +63,37 @@ else()
 endif()
 
 # vectorclass
-set(vectorclass_VERSION "1.30")
-set(vectorclass_SRC_URI "https://www.agner.org/optimize/vectorclass.zip")
+set(vectorclass_VERSION "2.00.01")
+set(vectorclass_SRC_URI "https://github.com/vectorclass/version2/archive/v${vectorclass_VERSION}.tar.gz")
 set(vectorclass_DESTDIR "${CMAKE_BINARY_DIR}/include")
 set(vectorclass_ROOTDIR "${vectorclass_DESTDIR}/vectorclass")
 
 ExternalProject_Add(vectorclass
   URL ${vectorclass_SRC_URI}
-  URL_HASH SHA256=f9cb70a3e865dd019b58f449d11f90147ce8ba5f2c60410389ec0ead92944b97
+  URL_HASH SHA256=73b239876ff3453abbc644a367e7cf2af6738099c60bd4bd32b6985f7ff23aef
   SOURCE_DIR vectorclass
   INSTALL_DIR ${vectorclass_ROOTDIR}
   LOG_DOWNLOAD 1 LOG_BUILD 1 LOG_INSTALL 1
   CONFIGURE_COMMAND ""
-  BUILD_COMMAND unzip -d <SOURCE_DIR> -o <SOURCE_DIR>/special.zip
+  BUILD_COMMAND ""
   INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>
   STEP_TARGETS install
 )
+
+set(vectorclass_addon_TARBALL "20415ff928ef0586f1574d8598bf4a52aed8d706.tar.gz")
+ExternalProject_Add(vectorclass_addon
+  URL "https://github.com/vectorclass/add-on/archive/${vectorclass_addon_TARBALL}"
+  URL_HASH SHA256=007e9e99b4561d511bf8a77ea3f350b251d7af00a2fb92fafa6fc402b7e5bf06
+  DOWNLOAD_NAME "vectorclass_addon.tar.gz"
+  DOWNLOAD_NO_EXTRACT TRUE
+  INSTALL_DIR ${vectorclass_ROOTDIR}
+  LOG_DOWNLOAD 1 LOG_BUILD 1 LOG_INSTALL 1
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND tar -C <INSTALL_DIR> -xvf <DOWNLOADED_FILE> --strip-components 1
+  STEP_TARGETS install
+)
+ExternalProject_Add_StepDependencies(vectorclass_addon configure vectorclass-install)
 
 # FIXME: This is a workaround to let ROOT find the headers at runtime if
 # they are in the build directory. This is necessary until we decide how to
@@ -91,8 +106,6 @@ if(NOT EXISTS ${CMAKE_BINARY_DIR}/include/Vc)
     ${Vc_INCLUDE_DIR}/Vc ${CMAKE_BINARY_DIR}/include/Vc)
 endif()
 # end of workaround
-
-# install(DIRECTORY ${Vc_DESTDIR}/ DESTINATION ".")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -138,7 +151,7 @@ if (USE_AVX2)
 target_link_libraries(generate PUBLIC ${Vc_LIBRARIES})
 target_include_directories(generate
     PUBLIC ${CMAKE_BINARY_DIR}/include/vectorclass)
-add_dependencies(generate vectorclass-install)
+add_dependencies(generate vectorclass_addon-install)
 target_compile_definitions(generate PUBLIC "-DVc_IMPL=AVX2")
 if (Vc_BUILTIN)
   add_dependencies(generate VC-install)
