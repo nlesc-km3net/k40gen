@@ -114,7 +114,7 @@ int main() {
     // - 5 bits: PMT_ID
     // - rest  : 100 * (DOM_ID + 1) + MOD_ID + 1
     // The ToT time and ToT are not relevant for this challenge
-    auto [times, values] = generate(i * dt, (i + 1) * dt, generators, "orca", true);
+    auto [times, values] = generate(i * dt, (i + 1) * dt, generators, "reference", true);
 
     // Sort by time, this ensures there is some spread in PMTs within
     // clusters
