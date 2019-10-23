@@ -37,7 +37,7 @@ array<array<float, 3>, 3> pmt_rotation(float, float)
            {0.f, 0.f, 1.f}}};
 }
 
-array<float, 3> rotate(const array<array<float, 3>, 3>& rotation,
+array<float, 3> rotate(const array<array<float, 3>, 3>& /* rotation */,
                        const array<float, 3>& pmt)
 {
   return pmt;
@@ -114,11 +114,11 @@ int main() {
     // - 5 bits: PMT_ID
     // - rest  : 100 * (DOM_ID + 1) + MOD_ID + 1
     // The ToT time and ToT are not relevant for this challenge
-    auto [times, values] = generate(i * dt, (i + 1) * dt, generators, true);
+    auto [times, values] = generate(i * dt, (i + 1) * dt, generators, "orca", true);
 
     // Sort by time, this ensures there is some spread in PMTs within
     // clusters
-    ranges::sort(view::zip(times, values), std::less<>{}, get_n<0>{});
+    ranges::sort(views::zip(times, values), std::less<>{}, get_n<0>{});
 
     // Part 2: randomly select hits to use as candidates
     // Suggestion: use a normally distributed number of hits with a mean
