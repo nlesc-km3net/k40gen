@@ -56,6 +56,13 @@ class CMakeBuild(build_ext):
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             build_args += ['--', '-j1']
 
+        if 'CONDA_EXE' in os.environ:
+            # Building in a conda environment, use the special
+            # toolchain file, ROOT doesn't seem to work
+            cmake_args += ['-DENABLE_ROOT=OFF',
+                           '-DCMAKE_INSTALL_PREFIX={}'.format(os.environ['CONDA_PREFIX']),
+                           '-DCMAKE_TOOLCHAIN_FILE={}/anaconda-toolchain.cmake'.format(ext.sourcedir)]
+
         env = os.environ.copy()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(
             env.get('CXXFLAGS', ''),
@@ -100,7 +107,7 @@ setup(
     version=__version__,
     author='Roel Aaij',
     author_email='roelaaij@nikhef.nl',
-    url='https://sikkel.nikhef.nl/roelaaij/k40gen',
+    url='https://gitlab.nikhef.nl/roelaaij/k40gen',
     description='standalone background generator for KM3NeT',
     long_description='',
     ext_modules=ext_modules,

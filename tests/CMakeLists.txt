@@ -45,7 +45,11 @@ target_link_libraries(test_k40gen PRIVATE generate test_functions)
 add_test(TestK40 test_k40gen)
 
 # Optional test binary based on ROOT
-find_package(ROOT QUIET COMPONENTS Core Cling Hist Gpad)
+if (ENABLE_ROOT)
+  find_package(ROOT QUIET COMPONENTS Core Cling Hist Gpad)
+else()
+  set(ROOT_FOUND FALSE)
+endif()
 if (ROOT_FOUND)
   add_executable(test_k40gen_root
     src/test_rates_root.cpp)

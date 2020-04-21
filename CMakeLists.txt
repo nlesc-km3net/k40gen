@@ -6,6 +6,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake) # for find_package
 option(ENABLE_PYTHON "Enable python bindings" TRUE)
 option(ENABLE_VC "Enable usage of VC library" TRUE)
 option(ENABLE_TESTS "Enable tests" TRUE)
+option(ENABLE_ROOT "Enable test with ROOT" TRUE)
 
 include(ExternalProject)
 include(FindPackageHandleStandardArgs)
