@@ -1,14 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/iostream.h>
-
-#include "xtensor/xmath.hpp"
-#include "xtensor/xarray.hpp"
-
-#define FORCE_IMPORT_ARRAY
-#include "xtensor-python/pyarray.hpp"
-#include "xtensor-python/pyvectorize.hpp"
-#include "xtensor/xadapt.hpp"
+#include <pybind11/numpy.h>
 
 #include <iostream>
 #include <numeric>
@@ -23,7 +16,14 @@ namespace {
   using std::array;
 }
 
-inline xt::pyarray<long>
+struct l0_t {
+  long t;
+  short dom_id;
+  short pmt_id;
+  short tot;
+};
+
+py::array_t<l0_t>
 generate_k40(const long time_start, const long time_end, Generators& gens,
              std::string scheme, bool avx2)
 {
@@ -32,9 +32,9 @@ generate_k40(const long time_start, const long time_end, Generators& gens,
   auto values = std::get<1>(r);
   auto n = times.size();
 
-  // Create output array and copy timestamps into it
-  vector<long> output(4 * n);
-  std::copy(begin(times), end(times), begin(output));
+  auto output = py::array_t<l0_t>(n);
+  auto req = output.request();
+  auto raw = static_cast<l0_t*>(req.ptr);
 
   // factory for lambda's to shift and mask the values back into their
   // components.
@@ -44,28 +44,26 @@ generate_k40(const long time_start, const long time_end, Generators& gens,
                                    };
                          };
 
-  // column in the output array
-  size_t column = 1;
   // Add DOM ID, PMT ID and TOT to the output array
-  for (auto fun : {// DOM ID
-                   shift_mask_fact(13, 0xffff),
-                   // PMT ID
-                   shift_mask_fact(8, 0x1f),
-                   // TOT
-                   shift_mask_fact(0, 0xff)}) {
-    for (size_t i = 0; i < values.size(); ++i) {
-      output[values.size() * column + i] = fun(values[i]);
-    }
-    ++column;
+  auto value2dom_id = shift_mask_fact(13, 0xffff);
+  auto value2pmt_id = shift_mask_fact(8, 0x1f);
+  auto value2tot = shift_mask_fact(0, 0xff);
+
+  for (size_t i = 0; i < times.size(); ++i) {
+    auto const v = values[i];
+    raw[i] = {times[i],
+              static_cast<short>(value2dom_id(v)),
+              static_cast<short>(value2pmt_id(v)),
+              static_cast<short>(value2tot(v))};
   }
-  // Adapt to an xt::array to give to python
-  return xt::adapt(std::move(output), array<size_t, 2>{4, n});
+
+  return std::move(output);
 }
 
 // Python Module and Docstrings
 PYBIND11_MODULE(k40gen, m)
 {
-    xt::import_numpy();
+  PYBIND11_NUMPY_DTYPE(l0_t, t, dom_id, pmt_id, tot);
 
     py::class_<Generators>(m, "Generators")
       .def(py::init<const uint, const uint, array<float, 4>>());

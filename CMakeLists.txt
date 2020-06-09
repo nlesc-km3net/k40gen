@@ -163,31 +163,16 @@ add_dependencies(generate vectorclass-install)
 endif()
 
 if(ENABLE_PYTHON)
-  include(XTensor)
-
   # pybind11
   find_package(pybind11 REQUIRED)
-  include(pybind11Tools)
-  pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
-  target_link_libraries(k40gen PUBLIC generate)
-  target_include_directories(k40gen PUBLIC ${PYBIND11_INCLUDE_DIRS})
-
-  if (xtp_BUILTIN)
-    add_dependencies(k40gen xtp-install)
-    target_include_directories(k40gen PRIVATE ${CMAKE_BINARY_DIR}/external/include)
-  endif()
-
-  # xtensor external dependencies
-  if (USE_AVX2)
-    target_compile_definitions(k40gen PRIVATE "-DXTENSOR_ENABLE_XSIMD")
-  endif()
-
-  # xtensor headers
-  target_include_directories(k40gen PUBLIC ${xtensor_INCLUDE_DIRS})
 
   # numpy headers
   find_package(NumPy REQUIRED)
-  target_include_directories(k40gen PRIVATE ${NUMPY_INCLUDE_DIRS})
+
+  include(pybind11Tools)
+  pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
+  target_link_libraries(k40gen PUBLIC generate)
+  target_include_directories(k40gen PUBLIC ${PYBIND11_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIRS})
 endif()
 
 if(ENABLE_TESTS)
