@@ -2,14 +2,14 @@ find_package(Catch2 QUIET)
 
 if(NOT Catch2_FOUND)
   # catch
-  set(catch_VERSION "2.6.1")
+  set(catch_VERSION "2.13.10")
   set(catch_SRC_URI "https://github.com/catchorg/Catch2/releases/download/v${catch_VERSION}/catch.hpp")
   set(catch_DESTDIR "${CMAKE_BINARY_DIR}/include")
   set(catch_ROOTDIR "${catch_DESTDIR}/catch2")
 
   ExternalProject_Add(catch
     URL ${catch_SRC_URI}
-    URL_HASH SHA256=a53ef31cf0bd4c1038cdaf8a38d6c88ee762e6aba181f9534a026363bc73e430
+    URL_HASH SHA256=3725c0f0a75f376a5005dde31ead0feb8f7da7507644c201b814443de8355170
     DOWNLOAD_NO_EXTRACT TRUE
     INSTALL_DIR ${catch_ROOTDIR}
     LOG_DOWNLOAD 1 LOG_INSTALL 1
