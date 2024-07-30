@@ -164,12 +164,12 @@ endif()
 
 if(ENABLE_PYTHON)
   # pybind11
-  find_package(pybind11 REQUIRED)
+  set(PYBIND11_FINDPYTHON ON)
+  find_package(pybind11 CONFIG REQUIRED)
 
   # numpy headers
   find_package(NumPy REQUIRED)
 
-  include(pybind11Tools)
   pybind11_add_module(k40gen "src/k40gen/bindings.cpp")
   target_link_libraries(k40gen PUBLIC generate)
   target_include_directories(k40gen PUBLIC ${PYBIND11_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIRS})
