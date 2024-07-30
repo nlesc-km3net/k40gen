@@ -20,7 +20,7 @@ if (NOT Vc_FOUND OR "${Vc_VERSION}" VERSION_LESS "1.3.2")
 
 message(STATUS "Using builtin Vc")
 set(Vc_BUILTIN TRUE)
-set(Vc_VERSION "1.4.1")
+set(Vc_VERSION "1.4.5")
 set(Vc_PROJECT "Vc-${Vc_VERSION}")
 set(Vc_SRC_URI "https://github.com/VcDevel/Vc/archive/${Vc_VERSION}.tar.gz")
 set(Vc_DESTDIR "${CMAKE_BINARY_DIR}/${EXTERNAL_DIR}")
@@ -35,6 +35,7 @@ ExternalProject_Add(VC
   BUILD_IN_SOURCE 0
   BUILD_BYPRODUCTS ${Vc_LIBRARY}
   LOG_DOWNLOAD 1 LOG_CONFIGURE 1 LOG_BUILD 1 LOG_INSTALL 1
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
   CMAKE_ARGS -G ${CMAKE_GENERATOR}
              -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
              -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -79,6 +80,7 @@ ExternalProject_Add(vectorclass
   BUILD_COMMAND ""
   INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> <INSTALL_DIR>
   STEP_TARGETS install
+  DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
 set(vectorclass_addon_TARBALL "20415ff928ef0586f1574d8598bf4a52aed8d706.tar.gz")
