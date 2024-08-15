@@ -3,6 +3,8 @@
 dist/
 build/
 *.py[cod]
+*.whl
+.eggs/*
 
 # OS X
 .DS_Store
