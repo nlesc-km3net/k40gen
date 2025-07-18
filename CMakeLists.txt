@@ -113,7 +113,27 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-set(CMAKE_CXX_STANDARD 17)
+if (ENABLE_ROOT)
+  find_package(ROOT QUIET COMPONENTS Core Cling Hist Gpad)
+  if(DEFINED ROOT_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD ${ROOT_CXX_STANDARD})
+  else()
+    # Deduce CXX_STANDARD from ROOT_CXX_FLAGS
+    set(ROOT_CXX_FLAGS_TEMP ${ROOT_CXX_FLAGS}) # Use a temporary variable to avoid modifying the original
+    separate_arguments(ROOT_CXX_FLAGS_TEMP)
+    list(FILTER ROOT_CXX_FLAGS_TEMP INCLUDE REGEX "-std=(c|gnu)\\+\\+[0-9]+")
+    list(TRANSFORM ROOT_CXX_FLAGS_TEMP REPLACE "-std=(c|gnu)\\+\\+([0-9]+)" "\\2")
+    if(NOT ROOT_CXX_FLAGS_TEMP)
+      message(FATAL_ERROR "Cannot find the C++ standard of ROOT")
+    endif()
+    list(GET ROOT_CXX_FLAGS_TEMP 0 CMAKE_CXX_STANDARD)
+  endif()
+else()
+  set(CMAKE_CXX_STANDARD 17)
+  set(ROOT_FOUND FALSE)
+endif()
+message(STATUS "k40gen will be built using C++${CMAKE_CXX_STANDARD} standard.")
+
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS} -O3 -g -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} -O0 -g -DDEBUG")
