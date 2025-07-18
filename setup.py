@@ -75,27 +75,6 @@ class CMakeBuild(build_ext):
         print()  # Add an empty line for cleaner output
 
 
-# class CatchTestCommand(test_ext):
-#     """
-#     A custom test runner to execute both Python unittest tests and C++ Catch-
-#     lib tests.
-#     """
-
-#     def distutils_dir_name(self, dname):
-#         """Returns the name of a distutils build directory"""
-#         dir_name = "{dirname}.{platform}-{version[0]}.{version[1]}"
-#         return dir_name.format(dirname=dname,
-#                                platform=sysconfig.get_platform(),
-#                                version=sys.version_info)
-
-#     def run(self):
-#         # Run CMake tests
-#         subprocess.call(['ctest -V'],
-#                         cwd=os.path.join('build',
-#                                          self.distutils_dir_name('temp')),
-#                         shell=True)
-
-
 ext_modules = [
     CMakeExtension('k40gen')
 ]

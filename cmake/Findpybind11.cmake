@@ -40,21 +40,22 @@
 #============================================================================
 
 # Finding Pybind11 involves calling the Python interpreter
+set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 CONFIG QUIET)
 if (pybind11_FOUND)
   set(PYBIND11_FOUND TRUE)
 else()
   if(pybind11_FIND_REQUIRED)
-    find_package(PythonInterp REQUIRED)
+    find_package(Python REQUIRED)
   else()
-    find_package(PythonInterp)
+    find_package(Python)
   endif()
 
-  if(NOT PYTHONINTERP_FOUND)
+  if(NOT Python3_FOUND)
     set(PYBIND11_FOUND FALSE)
   endif()
 
-  execute_process(COMMAND "${PYTHON_EXECUTABLE}" "-c"
+  execute_process(COMMAND "${Python_EXECUTABLE}" "-c"
     "import pybind11 as pb; print(pb.__version__); print(pb.get_include());"
     RESULT_VARIABLE _PYBIND11_SEARCH_SUCCESS
     OUTPUT_VARIABLE _PYBIND11_VALUES
